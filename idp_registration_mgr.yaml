@@ -1,0 +1,19 @@
+---
+annotations:
+  source: custom-template-library
+  created_by: Markos # Provide a custom name.
+  # Additional annotations can be included by adding more
+  # key: value pairs
+entities:
+  # Templates in this directory can be registered directly
+  # to the scope by providing the `org` and `project` scope
+  # any workflow without a scope will be placed at the
+  # Account-level
+  # - workflows:
+  #     - name: available-to-all-users
+  - org: Harness_Platform_Management
+    project: Solutions_Factory
+    workflows:
+      - name: harness-platform-setup
+      - name: harness-organization
+      - name: harness-project

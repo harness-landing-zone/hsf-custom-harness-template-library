@@ -1,0 +1,6 @@
+description: "project 1 in Harness Organization"
+name: "Project 1"
+tags:
+  purpose: Test
+  owner: platform-team
+  cost_center: cc1234

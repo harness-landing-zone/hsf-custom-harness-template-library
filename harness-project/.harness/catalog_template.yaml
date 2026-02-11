@@ -1,0 +1,179 @@
+apiVersion: harness.io/v1
+kind: Workflow
+name: Harness Project Setup
+identifier: harnessprojectsetup
+type: harness_project
+owner: group:default/HSF_Admins
+metadata:
+  description: A template to request a new Harness Project to be created or managed
+  tags:
+    - account-management
+    - solutions-factory
+    - harness
+spec:
+  parameters:
+    - title: Request Harness Project
+      required:
+        - organization_id
+        - project_name
+      properties:
+        # The token property needs to be in the first page of the workflow
+        token:
+          title: Harness Token
+          type: string
+          ui:widget: password
+          ui:field: HarnessAuthToken
+        organization_id:
+          title: Name of your existing Harness organization
+          type: string
+          description: Name of your existing Harness organization
+          pattern: '^([a-zA-Z][_a-zA-Z0-9]*)$'
+          ui:field: HarnessOrgPicker
+          ui:autofocus: true
+          # This option will force the user to select an Organization from the dropdown
+          default: Choose One
+        project_name:
+          title: "Enter your Harness Project Name"
+          type: string
+          description: "Should not exceed 128 characters and must be unique within the Organization"
+          maxLength: 128
+        project_description:
+          title: "Provide Project Description"
+          type: string
+          description: "Optional description to assign to your project"
+    - title: Solutions Factory Connection
+      properties:
+        solutions_factory_details:
+          title: Solutions Factory Details
+          type: object
+          description: |
+            ---
+            Harness URL : <+<+variable.account.solutions_factory_endpoint>.replaceFirst("/*$","")>
+
+            Harness Account : <+account.identifier>
+
+            Solutions Factory Org : <+variable.account.solutions_factory_org>
+
+            Solutions Factory Project : <+variable.account.solutions_factory_project>
+          required:
+            - harness_account_url
+            - harness_account_id
+            - harness_org_id
+            - harness_project_id
+            - template_library_connector
+            - template_library_repo
+            - template_library_branch
+            - template_library_directory
+          properties:
+            harness_account_url:
+              type: string
+              default: <+<+variable.account.solutions_factory_endpoint>.replaceFirst("/*$","")>
+              ui:widget: hidden
+            harness_account_id:
+              type: string
+              default: <+account.identifier>
+              ui:widget: hidden
+            harness_org_id:
+              type: string
+              default: <+variable.account.solutions_factory_org>
+              ui:widget: hidden
+            harness_project_id:
+              type: string
+              default: <+variable.account.solutions_factory_project>
+              ui:widget: hidden
+            template_library_connector:
+              type: string
+              default: <+variable.account.custom_template_library_connector>
+              ui:widget: hidden
+            template_library_repo:
+              type: string
+              default: <+variable.account.custom_template_library_repo>
+              ui:widget: hidden
+            template_library_branch:
+              type: string
+              default: main
+              ui:widget: hidden
+            template_library_directory:
+              type: string
+              default: harness-project
+              ui:widget: hidden
+        solutions_factory_opts:
+          title: Solutions Factory Workflow Options
+          type: object
+          required:
+            - repo_source
+            - workspace_type
+          properties:
+            repo_source:
+              type: string
+              # Used to group by source the workspaces for bulk actions
+              default: "custom"
+              ui:widget: hidden
+            workspace_type:
+              type: string
+              # Used to group by type the workspaces for bulk actions
+              default: harness-project
+              ui:widget: hidden
+            is_ephemeral:
+              type: string
+              # Determines if the workflow will trigger a temporary workspace that is
+              # deleted upon completion. Resources will be preserved
+              # Must be "true" or "false" and wrapped in quotes
+              default: "false"
+              ui:widget: hidden
+            requires_approval:
+              type: string
+              # Determines if the workflow will require an Approval before executing
+              # Must be "true" or "false" and wrapped in quotes
+              default: "true"
+              ui:widget: hidden
+            use_mini_factory:
+              type: string
+              # "When enabled, IDP workflows will default to leveraging the mini-factory to distribute workloads
+              # Value must be controlled through variable
+              default: <+variable.account.enable_hsf_mini_factory>
+              ui:widget: hidden
+  steps:
+    - id: configure_workspace
+      name: Configuring Harness Workspace
+      action: trigger:harness-custom-pipeline
+      input:
+        url: ${{ parameters.solutions_factory_details.harness_account_url }}/ng/account/${{ parameters.solutions_factory_details.harness_account_id }}/all/orgs/${{ parameters.solutions_factory_details.harness_org_id }}/projects/${{ "hws_" if parameters.solutions_factory_opts.use_mini_factory=="true" else "" }}${{ parameters.organization_id if parameters.solutions_factory_opts.use_mini_factory=="true" else parameters.solutions_factory_details.harness_project_id }}/pipelines/Create_and_Manage_IACM_Workspaces/pipeline-studio?storeType=INLINE
+        inputset:
+          GIT_REPOSITORY_CONNECTOR: ${{ parameters.solutions_factory_details.template_library_connector }}
+          GIT_REPOSITORY_NAME: ${{ parameters.solutions_factory_details.template_library_repo }}
+          GIT_REPOSITORY_BRANCH: ${{ parameters.solutions_factory_details.template_library_branch }}
+          GIT_REPOSITORY_PATH: ${{ parameters.solutions_factory_details.template_library_directory }}
+          RESOURCE_NAME: ${{ parameters.organization_id }}_${{ parameters.project_name|replace(" ","-") }}
+          RESOURCE_OWNER: group:default/Account_Admins
+          RESOURCE_VARS:
+            harness_platform_account: ${{ parameters.solutions_factory_details.harness_account_id }}
+            organization_id: ${{ parameters.organization_id }}
+            project_name: ${{ parameters.project_name }}
+            project_description: ${{ parameters.project_description }}
+          RESOURCE_VARS_ENVS: {}
+          RESOURCE_VARS_ENVS_SECRET: {}
+          RESOURCE_VARS_SECRETS: {}
+          INCLUDE_HARNESS_ENVS: "true"
+          WORKSPACE_TAGS:
+            source: ${{ parameters.solutions_factory_opts.repo_source }}
+            type: ${{ parameters.solutions_factory_opts.workspace_type }}
+          IS_EPHEMERAL: ${{ parameters.solutions_factory_opts.is_ephemeral }}
+          REQUIRES_APPROVAL: ${{ parameters.solutions_factory_opts.requires_approval }}
+        apikey: ${{ parameters.token }}
+        showOutputVariables: true
+  output:
+    links:
+      - title: Access Harness Project
+        url: ${{ steps.configure_workspace.output['pipeline.stages.Provision.spec.execution.steps.Provision.steps.apply.output.outputVariables.project_url']}}
+    text:
+      - title: Outputs
+        content: |
+          Harness Project Details
+
+          organization_identifier: ${{ steps.configure_workspace.output['pipeline.stages.Provision.spec.execution.steps.Provision.steps.apply.output.outputVariables.organization_identifier']}}
+
+          project_identifier: ${{ steps.configure_workspace.output['pipeline.stages.Provision.spec.execution.steps.Provision.steps.apply.output.outputVariables.project_identifier']}}
+
+          project_url: ${{ steps.configure_workspace.output['pipeline.stages.Provision.spec.execution.steps.Provision.steps.apply.output.outputVariables.project_url']}}
+
