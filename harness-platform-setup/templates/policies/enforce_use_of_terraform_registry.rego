@@ -16,7 +16,7 @@ deny[msg] {
   not startswith(call.source, "../")
   
   # ALLOW ONLY your specific Harness Registry
-  not startswith(call.source, "app.harness.io/qIYsos1ZQO6fJMG1Ip6KJA")
+  not startswith(call.source, "app.harness.io/<account_id>")
 
   msg := sprintf("Module source %q is not allowed. You must use the Harness Registry for account qIYsos.", [call.source])
 }

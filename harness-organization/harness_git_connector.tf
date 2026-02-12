@@ -17,11 +17,11 @@ module "github_connector" {
     [for k, v in lookup(each.value, "tags", {}) : "${k}:${v}"],
     local.common_tags_tuple
   ])
-  git_connector_url = each.value.cnf.connector_url
-  connection_type      = each.value.cnf.connection_type
-  validation_repo      = each.value.cnf.validation_repo
-  execute_on_delegate  = try(each.value.cnf.execute_on_delegate, false)
-  delegate_selectors   = try(each.value.cnf.delegate_selectors, [])
+  git_connector_url   = each.value.cnf.connector_url
+  connection_type     = each.value.cnf.connection_type
+  validation_repo     = each.value.cnf.validation_repo
+  execute_on_delegate = try(each.value.cnf.execute_on_delegate, false)
+  delegate_selectors  = try(each.value.cnf.delegate_selectors, [])
   git_connector_http_credentials = {
     github_app = {
       application_id  = each.value.cnf.github_app.app_id

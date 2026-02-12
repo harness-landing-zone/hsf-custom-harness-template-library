@@ -56,23 +56,23 @@ locals {
       {
         for rel in distinct(flatten([for p in cfg.patterns : try(fileset(cfg.global_dir, p), [])])) :
         (cfg.key_fn == "folder" ? basename(dirname(rel)) : replace(rel, ".yaml", "")) => {
-          origin = "global"
-          name   = cfg.key_fn == "folder" ? basename(dirname(rel)) : replace(rel, ".yaml", "")
+          origin     = "global"
+          name       = cfg.key_fn == "folder" ? basename(dirname(rel)) : replace(rel, ".yaml", "")
           identifier = cfg.key_fn == "project_folder" ? basename(dirname(rel)) : replace(replace(replace(rel, ".yaml", ""), " ", "_"), "-", "_")
-          dir    = cfg.global_dir
-          file   = rel
-          cnf    = try(yamldecode(file("${cfg.global_dir}/${rel}")), {})
+          dir        = cfg.global_dir
+          file       = rel
+          cnf        = try(yamldecode(file("${cfg.global_dir}/${rel}")), {})
         }
       },
       {
         for rel in distinct(flatten([for p in cfg.patterns : try(fileset(cfg.org_dir, p), [])])) :
         (cfg.key_fn == "folder" ? basename(dirname(rel)) : replace(rel, ".yaml", "")) => {
-          origin = "org"
-          name   = cfg.key_fn == "folder" ? basename(dirname(rel)) : replace(rel, ".yaml", "")
+          origin     = "org"
+          name       = cfg.key_fn == "folder" ? basename(dirname(rel)) : replace(rel, ".yaml", "")
           identifier = cfg.key_fn == "project_folder" ? basename(dirname(rel)) : replace(replace(replace(rel, ".yaml", ""), " ", "_"), "-", "_")
-          dir    = cfg.org_dir
-          file   = rel
-          cnf    = try(yamldecode(file("${cfg.org_dir}/${rel}")), {})
+          dir        = cfg.org_dir
+          file       = rel
+          cnf        = try(yamldecode(file("${cfg.org_dir}/${rel}")), {})
         }
       }
     )
