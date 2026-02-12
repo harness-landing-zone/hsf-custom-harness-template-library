@@ -39,12 +39,12 @@ module "github_connector" {
   project_id            = "my-project"
 
   # Configuration
-  github_connector_url  = "https://github.com/my-org"
+  git_connector_url     = "https://github.com/my-org"
   connection_type       = "Account"
   validation_repo       = "my-test-repo"
 
   # Authentication via GitHub App
-  github_connector_http_credentials = {
+  git_connector_http_credentials = {
     github_app = {
       application_id  = "123456"
       installation_id = "7891011"
@@ -81,7 +81,7 @@ module "github_connector" {
 
 | Name | Description | Type | Default |
 | --- | --- | --- | --- |
-| `github_connector_url` | URL of the GitHub repo or account. | `string` | `""` |
+| `git_connector_url` | URL of the Git repo or account. | `string` | `""` |
 | `connection_type` | `Account` or `Repo`. | `string` | `"Account"` |
 | `execute_on_delegate` | Whether to run connection through a delegate. | `bool` | `false` |
 | `delegate_selectors` | Tags to select specific delegates. | `set(string)` | `[]` |
@@ -90,9 +90,9 @@ module "github_connector" {
 
 | Name | Description | Type | Default |
 | --- | --- | --- | --- |
-| `github_connector_http_credentials` | Object for HTTP/App auth. | `object` | `null` |
-| `github_connector_ssh_credentials` | Object for SSH key auth. | `object` | `null` |
-| `github_connector_api_auth` | Required for Git Experience/Triggers. | `object` | `null` |
+| `git_connector_http_credentials` | Object for HTTP/App auth. | `object` | `null` |
+| `git_connector_ssh_credentials` | Object for SSH key auth. | `object` | `null` |
+| `git_connector_api_auth` | Required for Git Experience/Triggers. | `object` | `null` |
 
 
 ## Outputs

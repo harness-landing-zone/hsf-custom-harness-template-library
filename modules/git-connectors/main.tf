@@ -49,7 +49,7 @@ resource "harness_platform_connector_github" "github_connector" {
 
       dynamic "github_app" {
         # Only inject if github_app_api is true AND we have credentials available
-        for_each = try(api_authentication.value.github_app_api, false) ? [var.github_connector_http_credentials.github_app] : []
+        for_each = try(api_authentication.value.github_app_api, false) ? [var.git_connector_http_credentials.github_app] : []
         content {
           application_id  = github_app.value.application_id
           installation_id = github_app.value.installation_id
