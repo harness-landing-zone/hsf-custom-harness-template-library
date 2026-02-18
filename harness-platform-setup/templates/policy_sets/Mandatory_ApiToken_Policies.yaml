@@ -1,6 +1,0 @@
----
-action: onsave
-type: token
-policies:
-  - identifier: enforce_harness_api_token_age
-    severity: error

@@ -5,12 +5,12 @@ locals {
   # Same split logic as old code
   groups = [
     for group in local.all_groups : group
-    if !startswith(group.name, "_")
+    if !startswith(group.name, "_") && !try(group.cnf.scope_level == "account", false)
   ]
 
   existing_groups = [
     for group in local.all_groups : group
-    if startswith(group.name, "_")
+    if startswith(group.name, "_") || try(group.cnf.scope_level == "account", false)
   ]
 
   # Bindings list (same shape as old code)
@@ -20,6 +20,7 @@ locals {
         identifier       = "${group.identifier}_${lookup(binding, "role", "MISSING-ROLE-ID")}"
         group_identifier = group.identifier
         group_name       = group.name
+        scope_level      = try(group.cnf.scope_level, null)
         role             = lookup(binding, "role", "MISSING-ROLE")
         resource_group   = lookup(binding, "resource_group", "MISSING-ROLE")
       }
@@ -32,8 +33,8 @@ data "harness_platform_usergroup" "usergroup" {
     for group in local.existing_groups : group.identifier => group
   }
   identifier = each.value.identifier
-  org_id     = data.harness_platform_organization.selected.id
-  project_id = data.harness_platform_project.selected.id
+  org_id     = try(each.value.cnf.scope_level == "account" ? null : data.harness_platform_organization.selected.id, data.harness_platform_organization.selected.id)
+  project_id = try(each.value.cnf.scope_level == "account" ? null : data.harness_platform_project.selected.id, data.harness_platform_project.selected.id)
 }
 
 resource "harness_platform_usergroup" "usergroup" {
@@ -90,6 +91,7 @@ resource "harness_platform_role_assignments" "usergroup_bindings" {
   resource_group_identifier = each.value.resource_group
   role_identifier           = each.value.role
   principal {
+    scope_level = try(each.value.scope_level, null)
     identifier = try(
       harness_platform_usergroup.usergroup[each.value.group_identifier].id,
       harness_platform_usergroup.usergroup[each.value.group_name].id,

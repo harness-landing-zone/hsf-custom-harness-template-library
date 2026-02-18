@@ -5,12 +5,12 @@ locals {
   # Same split logic as old code
   groups = [
     for group in local.all_groups : group
-    if(startswith(group.name, "_") || ((group.cnf.scope_level != "account" || group.cnf.scope_level == null)))
+    if !startswith(group.name, "_") && !try(group.cnf.scope_level == "account", false)
   ]
 
   existing_groups = [
     for group in local.all_groups : group
-    if startswith(group.name, "_") || group.cnf.scope_level == "account"
+    if startswith(group.name, "_") || try(group.cnf.scope_level == "account", false)
   ]
 
   # Bindings list (same shape as old code)
@@ -100,13 +100,4 @@ resource "harness_platform_role_assignments" "usergroup_bindings" {
   }
   disabled = false
   managed  = false
-}
-
-
-output "existing_groups" {
-  value = local.existing_groups
-}
-
-output "groups" {
-  value = local.groups
 }
