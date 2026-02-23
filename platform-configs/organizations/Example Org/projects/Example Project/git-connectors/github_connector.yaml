@@ -11,7 +11,7 @@ validation_repo: harness-eks-module
 http_credentials:
   github_app:
     application_id: "1234567890"
-    installation_id: "9081823"
+    installation_id: "90887123"
     private_key_ref: account.public-modules
 api_auth:
   github_app_api: true
