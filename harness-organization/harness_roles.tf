@@ -22,7 +22,7 @@ locals {
   invalid_organization_permissions = merge({
     for role in local.roles :
     (role.name) => flatten([
-      for permission in role.cnf.permissions : [
+      for permission in try(role.cnf.permissions, []) : [
         permission
       ] if !contains(local.organization_permission_identifiers, permission)
     ])

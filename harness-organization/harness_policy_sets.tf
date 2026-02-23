@@ -32,8 +32,8 @@ resource "harness_platform_policyset" "policy_sets" {
   }
   identifier = each.value.identifier
   name       = each.value.name
-  action     = each.value.action
-  type       = each.value.type
+  action     = each.value.cnf.action
+  type       = each.value.cnf.type
   enabled    = lookup(each.value.cnf, "enabled", true)
 
   dynamic "policy_references" {

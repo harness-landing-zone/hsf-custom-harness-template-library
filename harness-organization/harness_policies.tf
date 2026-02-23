@@ -25,7 +25,7 @@ resource "harness_platform_policy" "policies" {
   rego        = each.value.payload
 
   tags = flatten([
-    [for k, v in lookup(each.value, "tags", {}) : "${k}:${v}"],
+    [for k, v in lookup(each.value.cnf, "tags", {}) : "${k}:${v}"],
     local.common_tags_tuple
   ])
 }

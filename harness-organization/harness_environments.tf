@@ -31,7 +31,7 @@ resource "harness_platform_overrides" "example" {
   for_each = {
     for environment in local.environment_overrides : environment.identifier => environment
   }
-  env_id = "account.dev"
+  env_id = each.value.identifier
   type   = "ENV_GLOBAL_OVERRIDE"
   yaml   = lookup(each.value.cnf, "yaml", {}) != {} ? replace(yamlencode(each.value.cnf.yaml), "/((?:^|\n)[\\s-]*)\"([\\w-]+)\":/", "$1$2:") : ""
 }
