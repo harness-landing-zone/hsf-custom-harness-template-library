@@ -1,0 +1,11 @@
+---
+# SSO Configuration
+# linked_sso_type: "SAML" # Required for SSO link
+# linked_sso_id: # Required
+# sso_group_id: # Should be the SSO Group ID to map
+tags:
+  purpose: Organisation 1 Admins
+scope_level: account
+role_bindings:
+- role: _organization_admin
+  resource_group: _all_resources_including_child_scopes

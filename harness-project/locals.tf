@@ -30,4 +30,13 @@ locals {
     var.project_id
   )
 
+  # Attempt to read the org-level config.yaml if it exists.
+  # Falls back to an empty map if the file is not present.
+  project_config = try(
+    yamldecode(file("${local.org_directory}/config.yaml")),
+    {}
+  )
+
+  # Use the name from config.yaml if defined, otherwise fall back to the variable.
+  project_name = try(local.project_config.name, var.project_name)
 }

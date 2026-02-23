@@ -10,7 +10,7 @@ resource "harness_platform_resource_group" "resource_group" {
   identifier = replace(replace(each.value.name, " ", "_"), "-", "_")
 
   name        = each.value.name
-  description = lookup(each.value, "description", "Harness ResourceGroup managed by Solutions Factory")
+  description = lookup(each.value.cnf, "description", "Harness ResourceGroup managed by Solutions Factory")
   account_id  = var.harness_platform_account
   org_id      = data.harness_platform_organization.selected.id
   project_id  = data.harness_platform_project.selected.id
@@ -28,9 +28,9 @@ resource "harness_platform_resource_group" "resource_group" {
     project_id = data.harness_platform_project.selected.id
   }
   resource_filter {
-    include_all_resources = lookup(each.value, "resource_filters", null) != null ? false : true
+    include_all_resources = lookup(each.value.cnf, "resource_filters", null) != null ? false : true
     dynamic "resources" {
-      for_each = lookup(each.value, "resource_filters", [])
+      for_each = lookup(each.value.cnf, "resource_filters", [])
       content {
         resource_type = lookup(resources.value, "type", null)
         # (Set of String) List of the identifiers

@@ -1,0 +1,24 @@
+---
+permissions: [
+  # IaCM Workspace - operational lifecycle
+  "iac_workspace_view",
+  "iac_workspace_edit",
+  "iac_workspace_delete",
+  "iac_workspace_editvariable",
+  "iac_workspace_deletevariable",
+  "iac_workspace_approve",
+  "iac_workspace_accessstate",
+  # Templates (IACM Registry templates)
+  "iac_registry_view",
+  # Pipeline execution (run IaCM pipelines against workspaces)
+  "core_pipeline_view",
+  "core_pipeline_execute",
+
+  # Connectors (reference only - no lifecycle ownership)
+  "core_connector_view",
+  "core_connector_access",
+
+  # Templates (consume only - no lifecycle ownership)
+  "core_template_view",
+  "core_template_access"
+]
