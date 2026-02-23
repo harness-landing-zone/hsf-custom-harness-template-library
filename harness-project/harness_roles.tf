@@ -18,7 +18,7 @@ locals {
   invalid_project_permissions = merge({
     for role in local.roles :
     (role.name) => flatten([
-      for permission in role.cnf.permissions : [
+      for permission in try(role.cnf.permissions, []) : [
         permission
       ] if !contains(local.project_permission_identifiers, permission)
     ])

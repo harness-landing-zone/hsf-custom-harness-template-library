@@ -16,7 +16,7 @@ resource "harness_platform_resource_group" "resource_group" {
   project_id  = data.harness_platform_project.selected.id
 
   tags = flatten([
-    [for k, v in lookup(each.value, "tags", {}) : "${k}:${v}"],
+    [for k, v in lookup(each.value.cnf, "tags", {}) : "${k}:${v}"],
     local.common_tags_tuple
   ])
 

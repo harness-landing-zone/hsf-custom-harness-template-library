@@ -1,16 +1,17 @@
-
 name: Modules Github Connector
 type: Github
 description: "Github connector for Modules repository"
 tags:
-  - modules
-  - git
-validation_repo: modules
+  type: git
+  provider: github
 execute_on_delegate: false
-github_app:
-  app_id: 2702119
-  installation_id: 105407330
-  private_key_ref: account.public-modules
-connector_url: https://github.com/markoskandylis
+connector_url: https://github.com/example
 connection_type: Account
 validation_repo: harness-eks-module
+http_credentials:
+  github_app:
+    application_id: "1234567890"
+    installation_id: "9081823"
+    private_key_ref: account.public-modules
+api_auth:
+  github_app_api: true

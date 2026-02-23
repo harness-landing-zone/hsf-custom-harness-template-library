@@ -1,0 +1,15 @@
+name: Internal Git Connector
+type: Git
+description: "Generic Git connector for internal repositories"
+tags:
+  type: git
+  provider: generic
+execute_on_delegate: true
+delegate_selectors:
+  - git-delegate
+connector_url: https://git.internal.example.com
+connection_type: Account
+validation_repo: test-repo
+http_credentials:
+  username: git-user
+  password_ref: account.git_password

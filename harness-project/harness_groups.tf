@@ -16,7 +16,7 @@ locals {
   # Bindings list (same shape as old code)
   groups_bindings = flatten([
     for group in local.all_groups : [
-      for binding in group.cnf.role_bindings : {
+      for binding in try(group.cnf.role_bindings, []) : {
         identifier       = "${group.identifier}_${lookup(binding, "role", "MISSING-ROLE-ID")}"
         group_identifier = group.identifier
         group_name       = group.name

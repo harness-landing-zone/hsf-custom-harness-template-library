@@ -1,5 +1,4 @@
 type: aws
-auth_type: oidc
 name: "AWS OIDC Connector Account 1"
 description: "Account-scoped Harness AWS connector using OIDC"
 execute_on_delegate: false
