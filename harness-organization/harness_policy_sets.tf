@@ -10,11 +10,11 @@ resource "harness_platform_policyset" "policy_sets" {
   lifecycle {
     precondition {
       condition = alltrue([
-        contains(keys(each.value), "identifier"),
-        contains(keys(each.value), "name"),
-        contains(keys(each.value), "action"),
-        contains(keys(each.value), "type"),
-        contains(["onrun", "onsave", "onstep"], lookup(each.value, "action", "missing-action"))
+        contains(keys(each.value.cnf), "identifier"),
+        contains(keys(each.value.cnf), "name"),
+        contains(keys(each.value.cnf), "action"),
+        contains(keys(each.value.cnf), "type"),
+        contains(["onrun", "onsave", "onstep"], lookup(each.value.cnf, "action", "missing-action"))
       ])
       error_message = <<EOF
       [Invalid] The following PolicySet (${each.key}) is invalid and missing one or more manadatory keys.
@@ -34,10 +34,10 @@ resource "harness_platform_policyset" "policy_sets" {
   name       = each.value.name
   action     = each.value.action
   type       = each.value.type
-  enabled    = lookup(each.value, "enabled", true)
+  enabled    = lookup(each.value.cnf, "enabled", true)
 
   dynamic "policy_references" {
-    for_each = lookup(each.value, "policies", [])
+    for_each = lookup(each.value.cnf, "policies", [])
     content {
       identifier = policy_references.value["identifier"]
       severity   = lookup(policy_references.value, "severity", "error")
@@ -45,7 +45,7 @@ resource "harness_platform_policyset" "policy_sets" {
   }
 
   tags = flatten([
-    [for k, v in lookup(each.value, "tags", {}) : "${k}:${v}"],
+    [for k, v in lookup(each.value.cnf, "tags", {}) : "${k}:${v}"],
     local.common_tags_tuple
   ])
 }

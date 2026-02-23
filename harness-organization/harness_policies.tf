@@ -21,7 +21,7 @@ resource "harness_platform_policy" "policies" {
   }
   identifier  = each.value.identifier
   name        = each.value.name
-  description = lookup(each.value, "description", "Harness Policy managed by Solutions Factory")
+  description = lookup(each.value.cnf, "description", "Harness Policy managed by Solutions Factory")
   rego        = each.value.payload
 
   tags = flatten([

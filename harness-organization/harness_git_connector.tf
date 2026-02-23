@@ -5,11 +5,12 @@ locals {
 
 
 module "github_connector" {
-  source = "../harness-modules/git-connectors"
+  source = "../modules/git-connectors"
   for_each = {
     for connector in local.git_connectors : connector.identifier => connector
   }
   connector_type        = each.value.cnf.type
+  org_id                = data.harness_platform_organization.selected.id
   connector_name        = each.value.cnf.name
   connector_identifier  = each.value.identifier
   connector_description = each.value.cnf.description

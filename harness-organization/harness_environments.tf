@@ -20,10 +20,10 @@ resource "harness_platform_environment" "environments" {
 
   name        = each.value.name
   org_id      = data.harness_platform_organization.selected.id
-  type        = lookup(each.value, "type", "PreProduction")
-  description = lookup(each.value, "description", "Harness Environment managed by Solutions Factory")
+  type        = lookup(each.value.cnf, "type", "PreProduction")
+  description = lookup(each.value.cnf, "description", "Harness Environment managed by Solutions Factory")
   tags = flatten([
-    [for k, v in lookup(each.value, "tags", {}) : "${k}:${v}"],
+    [for k, v in lookup(each.value.cnf, "tags", {}) : "${k}:${v}"],
     local.common_tags_tuple
   ])
 
