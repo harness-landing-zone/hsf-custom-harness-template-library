@@ -6,7 +6,6 @@ module "aws_oidc_cloud_provider_connector" {
   source = "../modules/cloud-provider-connectors"
   for_each = {
     for connector in local.cloud_provider_connectors : connector.identifier => connector
-    if lower(lookup(connector.cnf, "type", "aws")) == "aws" && lower(lookup(connector.cnf, "auth_type", "oidc")) == "oidc"
   }
 
   org_id = data.harness_platform_organization.selected.id

@@ -15,7 +15,7 @@ module "github_connector" {
   connector_identifier  = each.value.identifier
   connector_description = each.value.cnf.description
   connector_tags = flatten([
-    [for k, v in lookup(each.value, "tags", {}) : "${k}:${v}"],
+    [for k, v in lookup(each.value.cnf, "tags", {}) : "${k}:${v}"],
     local.common_tags_tuple
   ])
   git_connector_url   = each.value.cnf.connector_url
@@ -23,13 +23,20 @@ module "github_connector" {
   validation_repo     = each.value.cnf.validation_repo
   execute_on_delegate = try(each.value.cnf.execute_on_delegate, false)
   delegate_selectors  = try(each.value.cnf.delegate_selectors, [])
-  git_connector_http_credentials = {
+
+  git_connector_http_credentials = try(each.value.cnf.github_app, null) != null ? {
     github_app = {
-      application_id  = each.value.cnf.github_app.app_id
-      installation_id = each.value.cnf.github_app.installation_id
+      application_id  = tostring(each.value.cnf.github_app.app_id)
+      installation_id = tostring(each.value.cnf.github_app.installation_id)
       private_key_ref = each.value.cnf.github_app.private_key_ref
     }
-  }
+  } : try(each.value.cnf.token_ref, null) != null ? {
+    token_ref = each.value.cnf.token_ref
+  } : null
+
+  git_connector_ssh_credentials = try(each.value.cnf.ssh_key_ref, null) != null ? {
+    ssh_key_ref = each.value.cnf.ssh_key_ref
+  } : null
 
 }
 

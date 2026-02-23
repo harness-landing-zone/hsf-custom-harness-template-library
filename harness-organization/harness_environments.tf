@@ -2,12 +2,10 @@ locals {
 
   environments = local.merged_sources["environments"]
 
-
-
   environment_overrides = flatten([
     for override in local.environments : [
       override
-    ] if lookup(override, "yaml", {}) != {}
+    ] if lookup(override.cnf, "yaml", {}) != {}
   ])
 }
 
@@ -35,6 +33,5 @@ resource "harness_platform_overrides" "example" {
   }
   env_id = "account.dev"
   type   = "ENV_GLOBAL_OVERRIDE"
-  yaml   = lookup(each.value, "yaml", {}) != {} ? replace(yamlencode(each.value.yaml), "/((?:^|\n)[\\s-]*)\"([\\w-]+)\":/", "$1$2:") : ""
-  # yaml   = lookup(each.value, "yaml", {}) != {} ? yamlencode(each.value.yaml) : ""
+  yaml   = lookup(each.value.cnf, "yaml", {}) != {} ? replace(yamlencode(each.value.cnf.yaml), "/((?:^|\n)[\\s-]*)\"([\\w-]+)\":/", "$1$2:") : ""
 }
