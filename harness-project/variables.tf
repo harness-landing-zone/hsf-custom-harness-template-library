@@ -38,6 +38,17 @@ variable "tags" {
   default     = {}
 }
 
-variable "templates_root" { type = string }
-variable "org_root" { type = string }
-variable "project_key" { type = string }
+variable "templates_root" {
+  type    = string
+  default = ""
+}
+
+variable "org_root" {
+  type    = string
+  default = ""
+}
+
+variable "project_key" {
+  type    = string
+  default = ""
+}

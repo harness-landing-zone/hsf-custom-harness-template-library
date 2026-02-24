@@ -1,7 +1,4 @@
 locals {
-
-
-
   resource_groups = local.merged_sources["resource_groups"]
 }
 
@@ -13,25 +10,25 @@ resource "harness_platform_resource_group" "resource_group" {
   identifier = replace(replace(each.value.name, " ", "_"), "-", "_")
 
   name        = each.value.name
-  description = lookup(each.value, "description", "Harness ResourceGroup managed by Solutions Factory")
+  description = lookup(each.value.cnf, "description", "Harness ResourceGroup managed by Solutions Factory")
   account_id  = var.harness_platform_account
   org_id      = data.harness_platform_organization.selected.id
 
   tags = flatten([
-    [for k, v in lookup(each.value, "tags", {}) : "${k}:${v}"],
+    [for k, v in lookup(each.value.cnf, "tags", {}) : "${k}:${v}"],
     local.common_tags_tuple
   ])
 
   allowed_scope_levels = ["organization"]
   included_scopes {
-    filter     = lookup(each.value, "include_child_scopes", false) ? "INCLUDING_CHILD_SCOPES" : "EXCLUDING_CHILD_SCOPES"
+    filter     = lookup(each.value.cnf, "include_child_scopes", false) ? "INCLUDING_CHILD_SCOPES" : "EXCLUDING_CHILD_SCOPES"
     account_id = var.harness_platform_account
     org_id     = data.harness_platform_organization.selected.id
   }
   resource_filter {
-    include_all_resources = lookup(each.value, "resource_filters", null) != null ? false : true
+    include_all_resources = lookup(each.value.cnf, "resource_filters", null) != null ? false : true
     dynamic "resources" {
-      for_each = lookup(each.value, "resource_filters", [])
+      for_each = lookup(each.value.cnf, "resource_filters", [])
       content {
         resource_type = lookup(resources.value, "type", null)
         # (Set of String) List of the identifiers

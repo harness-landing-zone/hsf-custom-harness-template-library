@@ -1,0 +1,13 @@
+type: aws
+name: "AWS IRSA Test"
+description: "Test connector using IRSA (IAM Roles for Service Accounts) auth"
+execute_on_delegate: true
+force_delete: false
+tags:
+  owner: platform-team
+  purpose: test
+
+irsa_authentication:
+  delegate_selectors:
+    - "aws-delegate"
+  region: "eu-west-2"

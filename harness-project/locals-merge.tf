@@ -1,4 +1,5 @@
 locals {
+
   source_directory = "${path.module}/templates"
   org_directory    = "${var.org_root}/projects/${var.project_key}"
 
@@ -45,6 +46,18 @@ locals {
       patterns   = ["*.yaml"]
       key_fn     = "path"
     }
+    git-connectors = {
+      global_dir = "${local.source_directory}/git-connectors"
+      org_dir    = "${local.org_directory}/git-connectors"
+      patterns   = ["*.yaml"]
+      key_fn     = "path"
+    }
+    cloud-provider-connectors = {
+      global_dir = "${local.source_directory}/cloud-provider-connectors"
+      org_dir    = "${local.org_directory}/cloud-provider-connectors"
+      patterns   = ["*.yaml"]
+      key_fn     = "path"
+    }
   }
 
   # helper: compute the key for a given category + relative file
@@ -57,7 +70,11 @@ locals {
         for rel in distinct(flatten([for p in cfg.patterns : try(fileset(cfg.global_dir, p), [])])) :
         (cfg.key_fn == "folder" ? basename(dirname(rel)) : replace(rel, ".yaml", "")) => {
           origin     = "global"
-          name       = cfg.key_fn == "folder" ? basename(dirname(rel)) : replace(rel, ".yaml", "")
+          name = lookup(
+            try(yamldecode(file("${cfg.global_dir}/${rel}")), {}),
+            "name",
+            cfg.key_fn == "folder" ? basename(dirname(rel)) : replace(rel, ".yaml", "")
+          )
           identifier = cfg.key_fn == "project_folder" ? basename(dirname(rel)) : replace(replace(replace(rel, ".yaml", ""), " ", "_"), "-", "_")
           dir        = cfg.global_dir
           file       = rel
@@ -68,7 +85,11 @@ locals {
         for rel in distinct(flatten([for p in cfg.patterns : try(fileset(cfg.org_dir, p), [])])) :
         (cfg.key_fn == "folder" ? basename(dirname(rel)) : replace(rel, ".yaml", "")) => {
           origin     = "org"
-          name       = cfg.key_fn == "folder" ? basename(dirname(rel)) : replace(rel, ".yaml", "")
+          name = lookup(
+            try(yamldecode(file("${cfg.org_dir}/${rel}")), {}),
+            "name",
+            cfg.key_fn == "folder" ? basename(dirname(rel)) : replace(rel, ".yaml", "")
+          )
           identifier = cfg.key_fn == "project_folder" ? basename(dirname(rel)) : replace(replace(replace(rel, ".yaml", ""), " ", "_"), "-", "_")
           dir        = cfg.org_dir
           file       = rel

@@ -19,7 +19,7 @@ locals {
     ?
     replace(
       replace(
-        var.organization_name,
+        local.org_name,
         " ",
         "_"
       ),
@@ -29,5 +29,15 @@ locals {
     :
     var.organization_id
   )
+
+  # Attempt to read the org-level config.yaml if it exists.
+  # Falls back to an empty map if the file is not present.
+  org_config = try(
+    yamldecode(file("${local.org_directory}/config.yaml")),
+    {}
+  )
+
+  # Use the name from config.yaml if defined, otherwise fall back to the variable.
+  org_name = try(local.org_config.name, var.organization_name)
 
 }

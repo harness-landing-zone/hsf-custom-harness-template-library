@@ -1,0 +1,63 @@
+---
+########################
+# Harness User Group — Org1 Project1 Developers  (cross-scope binding)
+#
+# scope_level: account means this file does NOT create a new group.
+# It creates role assignments for the existing ACCOUNT-LEVEL group
+# "Org1_Project1_Developers" at the project scope.
+#
+# RBAC design — same-pipeline multi-stage deployments:
+#   Developers need core_environment_access on ALL environments (including prod)
+#   because Harness evaluates RBAC against the full pipeline before execution
+#   starts.  Restricting developers to PreProduction_Environments would block
+#   them from triggering a pipeline that also contains a Production stage.
+#
+#   The GATE to production is the Harness Approval Step in the pipeline:
+#     - Configure the Approval Step to require the "Project_1_Release_Managers"
+#       user group.
+#     - Developers trigger the pipeline → dev/qa/test stages run → Approval
+#       Step pauses → a Release Manager approves → prod stage runs.
+#
+#   If you want a HARD RBAC gate (developers physically cannot trigger the
+#   pipeline at all for prod), replace Developer → _all_project_level_resources
+#   with Developer → PreProduction_Environments.  You will then need a Release
+#   Manager to trigger (or re-trigger) the prod stage manually.
+#
+# What developers CAN do:
+#   - Trigger and view all project pipelines
+#   - Execute pipeline runs (all stages, gated to prod by the Approval Step)
+#   - View all environments including prod status and history
+#   - Access services, connectors, secrets, templates for pipeline runs
+#   - Create and edit input sets
+#
+# What developers CANNOT do:
+#   - Approve the prod Approval Step (only Release Managers can)
+#   - Roll back a production environment (no core_environment_rollback)
+#   - Manage or override deployment freeze windows
+#   - Edit or delete pipeline definitions, environments, or services
+#
+# SSO Configuration (uncomment to enable):
+# linked_sso_type: "SAML"
+# linked_sso_id: <your-sso-provider-id>
+# sso_group_id: <idp-developers-group-id>
+########################
+scope_level: account
+name: Application One - Developers
+description: Developers of Application One
+tags:
+  purpose: Developers
+  project: Project1
+  managed_by: solutions-factory
+
+role_bindings:
+  # Visibility across all project resources (pipelines, envs, services, etc.)
+  - role: _project_viewer
+    resource_group: _all_project_level_resources
+
+  # Developer role on all resources.
+  # core_pipeline_execute + core_environment_access (both prod & non-prod)
+  # are required so the Harness pre-flight RBAC check passes for the full
+  # pipeline.  The Approval Step in the pipeline is the gate that prevents
+  # developers from advancing to the prod stage without Release Manager sign-off.
+  - role: Developer
+    resource_group: _all_project_level_resources

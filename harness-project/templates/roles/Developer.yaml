@@ -1,4 +1,6 @@
 ---
+name: Developers
+description: Developers
 permissions: [
   "core_connector_access",
   "core_connector_view",

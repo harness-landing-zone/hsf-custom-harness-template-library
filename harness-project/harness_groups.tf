@@ -16,7 +16,7 @@ locals {
   # Bindings list (same shape as old code)
   groups_bindings = flatten([
     for group in local.all_groups : [
-      for binding in group.cnf.role_bindings : {
+      for binding in try(group.cnf.role_bindings, []) : {
         identifier       = "${group.identifier}_${lookup(binding, "role", "MISSING-ROLE-ID")}"
         group_identifier = group.identifier
         group_name       = group.name
@@ -61,19 +61,19 @@ resource "harness_platform_usergroup" "usergroup" {
   name        = each.value.name
   org_id      = data.harness_platform_organization.selected.id
   project_id  = data.harness_platform_project.selected.id
-  description = lookup(each.value, "description", "Harness UserGroup managed by Solutions Factory")
+  description = lookup(each.value.cnf, "description", "Harness UserGroup managed by Solutions Factory")
   user_emails = []
 
   externally_managed      = false
-  linked_sso_id           = lookup(each.value, "linked_sso_id", null)
-  linked_sso_display_name = lookup(each.value, "linked_sso_id", null)
-  linked_sso_type         = lookup(each.value, "linked_sso_type", null)
-  sso_linked              = lookup(each.value, "sso_group_id", null) != null ? true : false
-  sso_group_id            = lookup(each.value, "sso_group_id", null)
-  sso_group_name          = lookup(each.value, "sso_group_id", null)
+  linked_sso_id           = lookup(each.value.cnf, "linked_sso_id", null)
+  linked_sso_display_name = lookup(each.value.cnf, "linked_sso_display_name", null)
+  linked_sso_type         = lookup(each.value.cnf, "linked_sso_type", null)
+  sso_linked              = lookup(each.value.cnf, "sso_group_id", null) != null ? true : false
+  sso_group_id            = lookup(each.value.cnf, "sso_group_id", null)
+  sso_group_name          = lookup(each.value.cnf, "sso_group_name", null)
 
   tags = flatten([
-    [for k, v in lookup(each.value, "tags", {}) : "${k}:${v}"],
+    [for k, v in lookup(each.value.cnf, "tags", {}) : "${k}:${v}"],
     local.common_tags_tuple
   ])
 }

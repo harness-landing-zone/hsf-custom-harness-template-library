@@ -12,11 +12,11 @@
 # If you would like to modify the role bindings of those groups, you can add to the bindings by
 # creating a new file in this directory using the exact identifier.
 ########################
-# include_child_scopes: true
-# resource_filters:
-#   - type: CONNECTOR
-#     filters:
-#       - name: category
-#         values:
-#           - CLOUD_COST
-#           - SECRETS_MANAGERS
+include_child_scopes: true
+resource_filters:
+  - type: CONNECTOR
+    filters:
+      - name: category
+        values:
+          - CLOUD_COST
+          - SECRETS_MANAGERS
