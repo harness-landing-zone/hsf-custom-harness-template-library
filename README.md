@@ -444,19 +444,6 @@ This repo uses **local state only**. Each entrypoint maintains its own `terrafor
 
 ---
 
-## References
-
-- [Harness Terraform onboarding](https://developer.harness.io/docs/platform/get-started/terraform-onboard)
-- [Organizations and projects](https://developer.harness.io/docs/platform/organizations-and-projects/)
-- [RBAC in Harness](https://developer.harness.io/docs/platform/role-based-access-control/rbac-in-harness/)
-- [Manage roles](https://developer.harness.io/docs/platform/role-based-access-control/add-manage-roles/)
-- [Add resource groups](https://developer.harness.io/docs/platform/role-based-access-control/add-resource-groups/)
-- [IaCM roles and permissions](https://developer.harness.io/docs/infra-as-code-management/roles-and-permissions/#view-permissions-for-the-workspace)
-- Contributor guide: `CONTRIBUTING.md`
-- Scaffolding and local docs: `scaffolds/README.md`
-
----
-
 ## License
 
 MIT. See `LICENSE`.
