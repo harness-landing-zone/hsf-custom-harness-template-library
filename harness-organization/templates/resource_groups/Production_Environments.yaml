@@ -32,11 +32,6 @@ tags:
 include_child_scopes: false
 
 resource_filters:
-  # Pipelines — allow execute so release managers can trigger production pipeline runs
-  - type: PIPELINE
-
-  # Services — allow access so pipeline stages can reference service definitions
-  - type: SERVICE
 
   # Environments — ABAC filter: Production type only
   - type: ENVIRONMENT
@@ -44,12 +39,6 @@ resource_filters:
       - name: type
         values:
           - Production
-
-  # Environment Groups
-  - type: ENVIRONMENT_GROUP
-
-  # Infrastructure Definitions — required for CD stage infrastructure resolution
-  - type: INFRASTRUCTURE
 
   # Connectors — allow access so pipeline steps can resolve cloud/git credentials
   - type: CONNECTOR
@@ -59,9 +48,6 @@ resource_filters:
 
   # Templates — allow access/copy so pipelines can reference shared stage templates
   - type: TEMPLATE
-
-  # Input Sets
-  - type: INPUT_SET
 
   # File Store
   - type: FILE

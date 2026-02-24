@@ -42,9 +42,6 @@ tags:
 include_child_scopes: false
 
 resource_filters:
-  # Pipelines — allow execute so developers can trigger non-prod pipeline runs
-  - type: PIPELINE
-
   # Services — allow access so pipeline stages can reference service definitions
   - type: SERVICE
 
@@ -58,9 +55,6 @@ resource_filters:
   # Environment Groups
   - type: ENVIRONMENT_GROUP
 
-  # Infrastructure Definitions — required for CD stage infrastructure resolution
-  - type: INFRASTRUCTURE
-
   # Connectors — allow access so pipeline steps can resolve cloud/git credentials
   - type: CONNECTOR
 
@@ -69,9 +63,6 @@ resource_filters:
 
   # Templates — allow access/copy so pipelines can reference shared stage templates
   - type: TEMPLATE
-
-  # Input Sets — allow manage so developers can create/edit run-time inputs
-  - type: INPUT_SET
 
   # File Store — allow access so pipelines can read manifests and config files
   - type: FILE

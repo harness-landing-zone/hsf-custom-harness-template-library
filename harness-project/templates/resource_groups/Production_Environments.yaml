@@ -47,10 +47,7 @@ resource_filters:
 
   # Environment Groups
   - type: ENVIRONMENT_GROUP
-
-  # Infrastructure Definitions — required for CD stage infrastructure resolution
-  - type: INFRASTRUCTURE
-
+  
   # Connectors — allow access so pipeline steps can resolve cloud/git credentials
   - type: CONNECTOR
 
