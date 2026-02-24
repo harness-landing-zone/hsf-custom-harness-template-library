@@ -12,11 +12,11 @@ locals {
   ]
 }
 
-module "aws_oidc_cloud_provider_connector" {
+module "aws_cloud_provider_connector" {
   source = "../modules/cloud-provider-connectors"
   for_each = {
     for connector in local.cloud_provider_connectors : connector.identifier => connector
-    if lower(lookup(connector.cnf, "type", "aws")) == "aws" && lower(lookup(connector.cnf, "auth_type", "oidc")) == "oidc"
+    if lower(lookup(connector.cnf, "type", "")) == "aws"
   }
 
   connector_name        = lookup(each.value.cnf, "name", each.value.name)
@@ -30,12 +30,12 @@ module "aws_oidc_cloud_provider_connector" {
   execute_on_delegate = try(each.value.cnf.execute_on_delegate, false)
   force_delete        = try(each.value.cnf.force_delete, false)
 
-  # This wiring intentionally supports AWS OIDC only.
-  aws_connector_oidc_authentication = {
-    iam_role_arn       = each.value.cnf.oidc_authentication.iam_role_arn
-    delegate_selectors = toset(try(each.value.cnf.oidc_authentication.delegate_selectors, []))
-    region             = try(each.value.cnf.oidc_authentication.region, null)
-  }
-
-  aws_connector_cross_account_access = try(each.value.cnf.cross_account_access, null)
+  aws_connector_oidc_authentication           = try(each.value.cnf.oidc_authentication, null)
+  aws_connector_manual_authentication         = try(each.value.cnf.manual_authentication, null)
+  aws_connector_inherit_from_delegate         = try(each.value.cnf.inherit_from_delegate, null)
+  aws_connector_irsa_authentication           = try(each.value.cnf.irsa_authentication, null)
+  aws_connector_cross_account_access          = try(each.value.cnf.cross_account_access, null)
+  aws_connector_equal_jitter_backoff_strategy = try(each.value.cnf.equal_jitter_backoff_strategy, null)
+  aws_connector_fixed_delay_backoff_strategy  = try(each.value.cnf.fixed_delay_backoff_strategy, null)
+  aws_connector_full_jitter_backoff_strategy  = try(each.value.cnf.full_jitter_backoff_strategy, null)
 }

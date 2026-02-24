@@ -1,268 +1,462 @@
 # Custom Harness Template Library
 
-OpenTofu/Terraform templates for managing a Harness account, organizations, and projects on `app.harness.io` using the `harness/harness` provider.
+OpenTofu/Terraform templates for managing a Harness account, organizations, and projects using the `harness/harness` provider.
 
-## What This Repo Does
+## Overview
 
-This repository is organized around three operational entrypoints:
+This library provides three independent Terraform entrypoints that map to Harness's three resource scopes.
 
-- `harness-platform-setup/`: account-level baseline resources
-- `harness-organization/`: organization creation + org-scoped resources + project discovery/orchestration
-- `harness-project/`: reusable single-project module used directly or by `harness-organization`
-
-Important naming note:
-
-- There is no top-level `harness-projects/` directory.
-- Project discovery/orchestration is implemented in `harness-organization/harness-projects.tf`, which instantiates the reusable `harness-project/` module once per discovered project folder.
-
-## Architecture (Scope and RBAC)
-
-The repo intentionally separates responsibilities by Harness scope:
-
-- Account scope (`harness-platform-setup`)
-  - Account-level roles
-  - Account-level resource groups
-  - Account-level user groups and role assignments
-  - Account-level policies and policy sets
-  - Account-level environments/overrides (from local templates)
-- Organization scope (`harness-organization`)
-  - Creates the organization
-  - Applies org-scoped roles, resource groups, user groups, role assignments, policies, policy sets, environments, and git connectors
-  - Discovers project folders and calls `harness-project/` for each project
-- Project scope (`harness-project`)
-  - Creates the project
-  - Applies project-scoped roles, resource groups, user groups, role assignments, policies, policy sets, environments, and git connectors
-
-RBAC conventions this repo is designed to support (intentional and non-overlapping):
-
-- `iacm_workspace_*` permissions are project-scoped only
-- `iacm-developer` is project-scoped
-- `iacm-admin` is account-scoped
-- Developer role is CD pipelines only and has zero IACM permissions
-- Environment access is granted through Resource Groups (not role permissions directly)
-
-## Discovery and Config Resolution
-
-### Organization Discovery (`harness-organization`)
-
-`harness-organization` resolves configuration using:
-
-- Global templates: `platform-configs/templates/`
-- Optional org-specific overrides: `platform-configs/organizations/<organization_name>/`
-
-Behavior (preserved):
-
-- `var.organization_name` maps directly to the org folder name.
-- If `platform-configs/organizations/<organization_name>/` exists, files in that folder override matching global template files.
-- If the folder does not exist, execution falls back to global defaults only.
-
-Org/project discovery is file-driven via `fileset()` patterns:
-
-- Organizations/projects are discovered from `**/config.yaml` (folder-based keys)
-- Other categories (`groups`, `roles`, `environments`, `resource_groups`, `policy_sets`, `git-connectors`, `cloud-provider-connectors`, `policies`) are merged by relative file path
-
-### Project Discovery and Defaults (`harness-organization/harness-projects.tf` + `harness-project`)
-
-Project creation is orchestrated from `harness-organization/harness-projects.tf`:
-
-- Discovered project folders under:
-  - `platform-configs/organizations/<organization>/projects/*/config.yaml`
-- Each discovered project is passed into the `harness-project/` module with:
-  - `org_root`
-  - `project_key`
-  - project name/description from folder config (when present)
-
-Within `harness-project/`, project-scoped resources are merged from:
-
-- Global defaults: `harness-project/templates/`
-- Optional project-specific overrides: `<org_root>/projects/<project_key>/`
-
-Behavior (preserved):
-
-- If a project folder contains category files (for example `groups/*.yaml`, `roles/*.yaml`, `git-connectors/*.yaml`), those override same-path defaults from `harness-project/templates/`.
-- If a project folder omits a category/file, `harness-project/templates/` defaults are used (path-based fallback).
-
-## Folder Structure
-
-Key directories:
-
-```text
-.
-├── harness-platform-setup/          # Account-level baseline resources
-├── harness-organization/            # Org creation + org resources + project discovery
-├── platform-configs/
-│   ├── templates/                   # Global org/project overlay defaults
-│   └── organizations/
-│       └── <Organization Name>/     # Org-specific config and project folders
-│           ├── config.yaml
-│           ├── groups/
-│           ├── roles/
-│           ├── resource_groups/
-│           ├── environments/
-│           ├── policies/
-│           ├── policy_sets/
-│           ├── git-connectors/
-│           ├── cloud-provider-connectors/
-│           └── projects/
-│               └── <Project Name>/
-│                   ├── config.yaml
-│                   ├── groups/
-│                   ├── roles/
-│                   ├── resource_groups/
-│                   ├── environments/
-│                   ├── policies/
-│                   ├── policy_sets/
-│                   ├── git-connectors/
-│                   └── cloud-provider-connectors/
-├── harness-project/                 # Reusable single-project entrypoint/module
-│   └── templates/                   # Project defaults (envs/roles/groups/connectors/etc.)
-├── modules/
-│   ├── git-connectors/
-│   └── cloud-provider-connectors/   # AWS cloud provider connector module (wired in account/org/project entrypoints)
-├── scaffolds/                       # Template scaffolding and local docs
-├── providers.tf.example             # Provider config template (copy to providers.tf)
-└── README.md
+```
+Account ──► harness-platform-setup/
+Org     ──► harness-organization/   (also discovers and instantiates projects)
+Project ──► harness-project/        (reusable module, called directly or by org)
 ```
 
-## Inputs and Credentials
+Each entrypoint manages:
 
-### Provider Credentials (Environment Variables)
+| Resource | platform-setup | organization | project |
+|---|:---:|:---:|:---:|
+| Roles | ✓ | ✓ | ✓ |
+| Resource Groups | ✓ | ✓ | ✓ |
+| User Groups + Role Bindings | ✓ | ✓ | ✓ |
+| Environments + Overrides | ✓ | ✓ | ✓ |
+| OPA Policies + Policy Sets | ✓ | ✓ | ✓ |
+| Git Connectors | ✓  | ✓ | ✓ |
+| Cloud Provider Connectors (AWS) | ✓ | ✓ | ✓ |
 
-Use environment variables for credentials (preferred and required by this repo's operating rules). `providers.tf.example` supports env var fallback.
+---
 
-- `HARNESS_ACCOUNT_ID`
-- `HARNESS_PLATFORM_API_KEY`
-- `HARNESS_ENDPOINT` (optional; defaults to Harness SaaS gateway URL if not set)
+## Prerequisites
 
-Setup pattern:
+- [OpenTofu](https://opentofu.org/docs/intro/install/) (`tofu`) **or** [Terraform](https://developer.hashicorp.com/terraform/install) (`terraform`)
+- A Harness account with an API key that has account-admin permissions
+- The `harness/harness` provider `>= 0.31` and `hashicorp/time ~> 0.9.1` (fetched automatically by `tofu init`)
 
-1. Copy `providers.tf.example` into the entrypoint directory you are running as `providers.tf` (gitignored).
-2. Export credentials in your shell.
-3. Keep secrets out of `terraform.tfvars`.
+---
 
-## EntryPoint Variables
+## Deployment Workflow
 
-### `harness-platform-setup/`
+### 1. Account baseline — `harness-platform-setup/`
 
-Required:
+Run this once when setting up a new Harness account. Creates account-scoped roles, resource groups, user groups, OPA policies, and environments.
 
-- `harness_platform_account`
 
-Optional:
 
-- `harness_platform_url` (default `https://app.harness.io/gateway`)
-- `tags`
+`terraform.tfvars` minimum content:
 
-### `harness-organization/`
-
-Required:
-
-- `harness_platform_account`
-- `organization_name`
-
-Optional:
-
-- `harness_platform_url` (default `https://app.harness.io/gateway`)
-- `organization_id` (otherwise derived from `organization_name`)
-- `organization_description`
-- `tags`
-- `projects` (declared, but project discovery is normally file/folder driven via repo-root `platform-configs/`)
-
-### `harness-project/`
-
-Required:
-
-- `harness_platform_account`
-- `organization_id`
-- `project_name`
-
-Optional:
-
-- `harness_platform_url` (default `https://app.harness.io/gateway`)
-- `project_id` (otherwise derived from `project_name`)
-- `project_description`
-- `tags`
-- `templates_root`
-- `org_root`
-- `project_key`
-
-Note:
-
-- `org_root` and `project_key` are used by `harness-organization/harness-projects.tf` when orchestrating project discovery.
-- `templates_root` is declared/passed, but the current `harness-project/` implementation reads defaults from `harness-project/templates/` directly.
-
-## Workflow (OpenTofu / Local State)
-
-This repo uses local state only.
-
-- Do not configure a remote backend.
-- Run from the specific entrypoint directory you are targeting (`harness-platform-setup/`, `harness-organization/`, or `harness-project/`).
-- Standard workflow:
-  - `tofu init`
-  - `tofu validate`
-  - `tofu plan`
-- Do not run `tofu apply` unless explicitly intended and approved.
-- Review plan output carefully and flag any `destroy` actions before proceeding.
-
-Example (organization onboarding + project discovery):
-
-```bash
-cd harness-organization
-cp ../providers.tf.example providers.tf
-
-# Prefer env vars for credentials
-export HARNESS_ACCOUNT_ID="<account_id>"
-export HARNESS_PLATFORM_API_KEY="<api_key>"
-# export HARNESS_ENDPOINT="https://app.harness.io/gateway" # optional
-
-cp terraform.tfvars.example terraform.tfvars
-# Edit terraform.tfvars and set at least:
-# - harness_platform_account (can also come from env via provider vars)
-# - organization_name
-
-tofu init
-tofu validate
-tofu plan
+```hcl
+harness_platform_account = "abc123xyz"
+tags = {}
 ```
 
-Example (account baseline setup):
+---
 
-```bash
-cd harness-platform-setup
-cp ../providers.tf.example providers.tf
-cp terraform.tfvars.example terraform.tfvars
+### 2. Organization + Projects — `harness-organization/`
 
-tofu init
-tofu validate
-tofu plan
+Run this once per Harness organization. Creates the org, applies org-scoped resources, and automatically discovers and creates all projects under that org from `platform-configs/organizations/<org-name>/projects/`.
+
+`terraform.tfvars` minimum content:
+
+```hcl
+harness_platform_account = "abc123xyz"
+organization_name        = "My Org"   # Must match folder name in platform-configs/organizations/
 ```
+
+> **Project discovery is automatic.** Any folder matching `platform-configs/organizations/<org-name>/projects/*/config.yaml` is instantiated as a Harness project. No variables list required.
+
+---
+
+### 3. Standalone project — `harness-project/`
+
+Use this entrypoint directly when creating a single project outside of org-level discovery.
+
+`terraform.tfvars` minimum content:
+
+```hcl
+harness_platform_account = "abc123xyz"
+organization_id          = "My_Org"
+project_name             = "My Project"
+```
+
+---
+
+## Configuration — How the YAML Workflow Works
+
+### Directory layout
+
+```
+platform-configs/
+└── organizations/
+    └── <Organization Name>/            # Folder name == organization_name variable
+        ├── config.yaml                 # Org metadata (name, description, tags)
+        ├── groups/
+        ├── roles/
+        ├── resource_groups/
+        ├── environments/
+        ├── policies/
+        ├── policy_sets/
+        ├── git-connectors/
+        ├── cloud-provider-connectors/
+        └── projects/
+            └── <Project Name>/         # Folder name == project identifier
+                ├── config.yaml         # Project metadata
+                ├── groups/
+                ├── roles/
+                ├── resource_groups/
+                ├── environments/
+                ├── policies/
+                ├── policy_sets/
+                ├── git-connectors/
+                └── cloud-provider-connectors/
+```
+
+### Override / merge resolution
+
+For `harness-organization` and `harness-project`, every resource category is merged from two sources:
+
+1. **Global defaults** — `<entrypoint>/templates/<category>/`
+2. **Org or project overrides** — `platform-configs/organizations/<org>/<category>/` (or `.../projects/<project>/<category>/`)
+
+When a file exists in both locations with the **same relative path**, the org/project version wins. Files only in the global defaults are included unchanged. This means you can ship sensible defaults in `templates/` and only place YAML files in `platform-configs/` for what you want to change or add.
+
+For `harness-platform-setup`, there is no merge — it reads exclusively from `harness-platform-setup/templates/`.
+
+### Resource identifier derivation
+
+The Harness resource identifier is derived from the **filename** (without `.yaml`), with spaces and dashes replaced by underscores. You can override this by setting `identifier:` explicitly in the YAML.
+
+---
+
+## YAML Schema Reference
+
+### `config.yaml` (org or project root)
+
+```yaml
+name: "My Organization"           # Display name
+description: "..."                # Optional
+identifier: "my_org"              # Optional — overrides filename-derived identifier
+tags:
+  owner: platform-team
+  env: prod
+```
+
+### Groups (`groups/*.yaml`)
+
+```yaml
+scope_level: account # Group already exst in th eacocunt level so it will be Inherited to the relevant scope
+name: "Platform Admins"
+tags:
+  purpose: admins
+
+# SSO linking (all optional)
+linked_sso_type: "SAML"
+linked_sso_id: "saml-provider-id"
+sso_group_id: "saml-group-id"
+sso_group_name: "Platform Admins"
+
+# Role bindings granted to this group
+role_bindings:
+  - role: _organization_admin                          # Built-in or custom role identifier
+    resource_group: _all_resources_including_child_scopes
+  - role: my_custom_role
+    resource_group: my_resource_group
+```
+
+> **Existing groups** (pre-created outside Terraform, e.g. SSO-synced): prefix the filename with `_` (e.g. `_existing_admins.yaml`). Terraform will look up the group by identifier and assign role bindings without trying to create it. or by adding the value
+
+### Roles (`roles/*.yaml`)
+
+```yaml
+name: "Developer"
+permissions:
+  - core_pipeline_view
+  - core_pipeline_execute
+  - core_environment_view
+  - core_service_view
+  - core_connector_view
+  - core_secret_view
+```
+
+> Valid permissions are validated at plan time against the live Harness API. Invalid permissions cause a `precondition` failure with a clear error listing the invalid entries.
+
+### Resource Groups (`resource_groups/*.yaml`)
+
+```yaml
+name: "Production Environments"
+description: "Access to production environments only"
+color: "#0063F7"
+included_scopes:
+  - filter: INCLUDING_CHILD_SCOPES
+    account_id: "<account_id>"
+resource_filters:
+  - resource_type: ENVIRONMENT
+    filters:
+      - name: type
+        values:
+          - Production
+  - resource_type: PIPELINE
+    filters: []     # Empty = all pipelines
+```
+
+### Environments (`environments/*.yaml`)
+
+```yaml
+name: "Production"
+type: Production          # PreProduction | Production
+description: "..."
+tags:
+  env: prod
+```
+
+With environment override YAML (V2 overrides):
+
+```yaml
+name: "Production"
+type: Production
+yaml:
+  environmentRef: production
+  variables:
+    - name: region
+      value: eu-west-1
+      type: String
+```
+
+### Policies (`policies/*.rego`)
+
+Policy files use the `.rego` extension. The filename (without `.rego`) becomes the identifier and display name.
+
+```rego
+package pipeline
+
+deny[msg] {
+  input.pipeline.stages[_].stage.spec.execution.steps[_].step.type == "ShellScript"
+  msg := "ShellScript steps are not allowed"
+}
+```
+
+### Policy Sets (`policy_sets/*.yaml`)
+
+```yaml
+name: "Mandatory Pipeline Policies"
+action: onrun                  # onrun | onsave | onstep | afterTerraformPlan
+type: pipeline                 # pipeline | template | inputset | ...
+policies:
+  - identifier: enforce_template_version_schema
+    severity: error            # error | warning
+  - identifier: my_custom_policy
+    severity: warning
+```
+
+### Git Connectors (`git-connectors/*.yaml`)
+
+**GitHub connector (GitHub App auth):**
+
+```yaml
+name: "Platform GitHub Connector"
+type: Github                          # Github | Git
+description: "..."
+tags:
+  provider: github
+connector_url: https://github.com/my-org
+connection_type: Account              # Account | Repo
+validation_repo: my-validation-repo
+execute_on_delegate: false
+http_credentials:
+  github_app:
+    application_id: "123456"
+    installation_id: "789012"
+    private_key_ref: account.my_github_app_key
+api_auth:
+  github_app_api: true
+```
+
+**Generic Git connector (username/token):**
+
+```yaml
+name: "Internal Git Connector"
+type: Git
+connector_url: https://git.internal.example.com/my-org
+connection_type: Account
+validation_repo: my-repo
+execute_on_delegate: true
+delegate_selectors:
+  - internal-delegate
+http_credentials:
+  username: git-user
+  password_ref: account.git_token
+```
+
+### Cloud Provider Connectors (`cloud-provider-connectors/*.yaml`)
+
+The `type` field selects the provider. Currently only `aws` is supported.
+
+**OIDC (recommended for EKS/IRSA):**
+
+```yaml
+type: aws
+name: "AWS OIDC Connector"
+execute_on_delegate: false
+oidc_authentication:
+  iam_role_arn: "arn:aws:iam::123456789012:role/HarnessOIDCRole"
+  region: "eu-west-1"
+  delegate_selectors:
+    - my-delegate
+```
+
+**IRSA:**
+
+```yaml
+type: aws
+name: "AWS IRSA Connector"
+execute_on_delegate: true
+irsa_authentication:
+  iam_role_arn: "arn:aws:iam::123456789012:role/HarnessIRSARole"
+  delegate_selectors:
+    - my-delegate
+```
+
+**Manual (access key/secret):**
+
+```yaml
+type: aws
+name: "AWS Manual Connector"
+execute_on_delegate: true
+manual_authentication:
+  access_key_ref: account.aws_access_key
+  secret_key_ref: account.aws_secret_key
+  delegate_selectors:
+    - my-delegate
+  region: "eu-west-1"
+```
+
+**Inherit from delegate:**
+
+```yaml
+type: aws
+name: "AWS Delegate Connector"
+execute_on_delegate: true
+inherit_from_delegate:
+  delegate_selectors:
+    - my-delegate
+```
+
+With optional cross-account access (any auth type):
+
+```yaml
+cross_account_access:
+  role_arn: "arn:aws:iam::999999999999:role/HarnessCrossAccount"
+  external_id: "harness-external-id"
+```
+
+---
+
+## Modules Reference
+
+### `modules/git-connectors`
+
+Supports `Github` and `Git` connector types. The `connector_type` variable controls which Harness resource is created. All credential fields are optional — pass only what your YAML contains.
+
+| Variable | Required | Description |
+|---|:---:|---|
+| `connector_type` | ✓ | `Github` or `Git` |
+| `connector_name` | ✓ | Display name |
+| `connector_identifier` | ✓ | Harness identifier |
+| `git_connector_url` | ✓ | Repository or account URL |
+| `connection_type` | ✓ | `Account` or `Repo` |
+| `git_connector_http_credentials` | — | HTTP auth block (username/password or GitHub App) |
+| `git_connector_ssh_credentials` | — | SSH auth block |
+| `git_connector_api_auth` | — | API auth (required for Git Experience) |
+| `org_id`, `project_id` | — | Scope; omit for account-level |
+
+### `modules/cloud-provider-connectors`
+
+AWS only. Exactly one authentication mode must be provided; the module enforces this with a `precondition`.
+
+| Variable | Required | Description |
+|---|:---:|---|
+| `connector_name` | ✓ | Display name |
+| `connector_identifier` | ✓ | Harness identifier |
+| `aws_connector_oidc_authentication` | — | OIDC auth object |
+| `aws_connector_irsa_authentication` | — | IRSA auth object |
+| `aws_connector_manual_authentication` | — | Access key / secret key object |
+| `aws_connector_inherit_from_delegate` | — | Delegate inherit object |
+| `aws_connector_cross_account_access` | — | Cross-account role ARN |
+| `org_id`, `project_id` | — | Scope; omit for account-level |
+
+---
+
+## Adding a New Organization
+
+1. Create the folder: `platform-configs/organizations/<Org Name>/`
+2. Add `config.yaml`:
+   ```yaml
+   name: "Org Name"
+   description: "..."
+   tags:
+     owner: platform-team
+   ```
+3. Add any resource YAML files in the relevant category subdirectories (groups, roles, etc.).
+4. Run `harness-organization/` with `organization_name = "Org Name"`.
+
+## Adding a New Project
+
+1. Create the folder: `platform-configs/organizations/<Org Name>/projects/<Project Name>/`
+2. Add `config.yaml`:
+   ```yaml
+   name: "Project Name"
+   description: "..."
+   ```
+3. Add project-specific YAML overrides as needed. Any category you leave empty will inherit from `harness-project/templates/`.
+4. Re-run `harness-organization/` — the project is discovered and created automatically.
+
+---
+
+## RBAC Design Conventions
+
+| Scope | Principle |
+|---|---|
+| Account | `iacm-admin` role, account-wide admin groups, OPA governance |
+| Organization | Org-admin groups, shared resource groups, org-scoped connectors |
+| Project | Developer/release-manager groups, pipeline-scoped environments, IACM workspace permissions |
+
+- `iacm_workspace_*` permissions are **project-scoped only** (not valid at account or org scope).
+- Environment access is granted through **Resource Groups** (filter by env type), not role permissions directly.
+- Harness built-in identifiers (e.g. `_organization_admin`, `_all_resources_including_child_scopes`) are prefixed with `_` and referenced directly in `role_bindings`.
+
+---
+
+## State Management
+
+This repo uses **local state only**. Each entrypoint maintains its own `terraform.tfstate` file within its directory.
+
+- Do not configure a remote backend unless you intend to migrate.
+- Run one entrypoint at a time — they are independent.
+- Commit `terraform.tfstate` files only if your team has agreed on a shared local-state workflow; otherwise keep them local and gitignored.
+
+---
 
 ## Provider / Resource Notes
 
-The current code declares:
+- Provider: `harness/harness >= 0.31`, `hashicorp/time ~> 0.9.1`
+- `harness_platform_role_assignments.identifier` must be unique per scope; the library derives it as `<group_identifier>_<role_identifier>`.
+- `harness_platform_usergroup` SSO fields are in the `lifecycle { ignore_changes }` block — SSO linking managed outside Terraform will not be overwritten on subsequent runs.
+- `harness_platform_permissions` is fetched live at plan time to validate role permissions against the actual account.
 
-- `harness/harness` provider `>= 0.31`
-- `hashicorp/time` provider `~> 0.9.1`
+---
 
-Resource names and scope usage in this README were checked against the Harness Terraform provider documentation via Terraform MCP (for example `harness_platform_organization`, `harness_platform_project`, `harness_platform_roles`, `harness_platform_resource_group`, `harness_platform_usergroup`, `harness_platform_role_assignments`, `harness_platform_policy`, `harness_platform_policyset`, `harness_platform_environment`).
+## References
 
-## References (Official Harness Docs)
+- [Harness Terraform onboarding](https://developer.harness.io/docs/platform/get-started/terraform-onboard)
+- [Organizations and projects](https://developer.harness.io/docs/platform/organizations-and-projects/)
+- [RBAC in Harness](https://developer.harness.io/docs/platform/role-based-access-control/rbac-in-harness/)
+- [Manage roles](https://developer.harness.io/docs/platform/role-based-access-control/add-manage-roles/)
+- [Add resource groups](https://developer.harness.io/docs/platform/role-based-access-control/add-resource-groups/)
+- [IaCM roles and permissions](https://developer.harness.io/docs/infra-as-code-management/roles-and-permissions/#view-permissions-for-the-workspace)
+- Contributor guide: `CONTRIBUTING.md`
+- Scaffolding and local docs: `scaffolds/README.md`
 
-- Harness Terraform onboarding: https://developer.harness.io/docs/platform/get-started/terraform-onboard
-- Harness organizations and projects: https://developer.harness.io/docs/platform/organizations-and-projects/
-- RBAC in Harness: https://developer.harness.io/docs/platform/role-based-access-control/rbac-in-harness/
-- Manage roles: https://developer.harness.io/docs/platform/role-based-access-control/add-manage-roles/
-- Manage user groups: https://developer.harness.io/docs/platform/role-based-access-control/add-manage-user-groups/
-- Add resource groups: https://developer.harness.io/docs/platform/role-based-access-control/add-resource-groups/
-- IaCM roles and permissions (workspace permissions reference): https://developer.harness.io/docs/infra-as-code-management/roles-and-permissions/#view-permissions-for-the-workspace
-
-## Developer Guides
-
-Repo scaffolding and contributor guides are in:
-
-- `scaffolds/README.md`
-- `CONTRIBUTING.md`
+---
 
 ## License
 
-MIT License. See `LICENSE`.
+MIT. See `LICENSE`.

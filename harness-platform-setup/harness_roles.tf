@@ -38,7 +38,7 @@ locals {
   invalid_account_permissions = merge({
     for role in local.roles :
     (role.identifier) => flatten([
-      for permission in role.permissions : [
+      for permission in try(role.permissions, []) : [
         permission
       ] if !contains(local.account_permission_identifiers, permission)
     ])

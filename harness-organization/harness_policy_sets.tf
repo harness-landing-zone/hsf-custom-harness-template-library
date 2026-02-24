@@ -14,7 +14,7 @@ resource "harness_platform_policyset" "policy_sets" {
         contains(keys(each.value.cnf), "name"),
         contains(keys(each.value.cnf), "action"),
         contains(keys(each.value.cnf), "type"),
-        contains(["onrun", "onsave", "onstep"], lookup(each.value.cnf, "action", "missing-action"))
+        contains(["onrun", "onsave", "onstep", "afterTerraformPlan"], lookup(each.value.cnf, "action", "missing-action"))
       ])
       error_message = <<EOF
       [Invalid] The following PolicySet (${each.key}) is invalid and missing one or more manadatory keys.
@@ -27,6 +27,7 @@ resource "harness_platform_policyset" "policy_sets" {
       - onrun
       - onsave
       - onstep
+      - afterTerraformPlan
       EOF
     }
   }

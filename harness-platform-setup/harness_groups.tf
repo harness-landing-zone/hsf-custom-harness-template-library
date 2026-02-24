@@ -79,11 +79,11 @@ resource "harness_platform_usergroup" "usergroup" {
 
   externally_managed      = false
   linked_sso_id           = lookup(each.value, "linked_sso_id", null)
-  linked_sso_display_name = lookup(each.value, "linked_sso_id", null)
+  linked_sso_display_name = lookup(each.value, "linked_sso_display_name", null)
   linked_sso_type         = lookup(each.value, "linked_sso_type", null)
   sso_linked              = lookup(each.value, "sso_group_id", null) != null ? true : false
   sso_group_id            = lookup(each.value, "sso_group_id", null)
-  sso_group_name          = lookup(each.value, "sso_group_id", null)
+  sso_group_name          = lookup(each.value, "sso_group_name", null)
 
   tags = local.common_tags_tuple
 }
