@@ -15,7 +15,6 @@ locals {
             "name",
             replace(replace(replace(role_file, ".yaml", ""), "-", "_"), "_", " ")
           )
-
         }
       )
     ]

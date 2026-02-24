@@ -1,4 +1,6 @@
 ---
+name: IACM Admin role
+description: Admins role that allow to Create IACM Modules to the registry Test
 permissions: [
   # Module Registry (account-level - admin only)
   "iac_registry_view",

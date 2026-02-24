@@ -1,4 +1,6 @@
 ---
+name: IACM Developers role
+description: Role to Manage workspaces
 permissions: [
   # IaCM Workspace - operational lifecycle
   "iac_workspace_view",

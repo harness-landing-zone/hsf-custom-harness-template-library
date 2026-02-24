@@ -14,6 +14,7 @@ locals {
             "name",
             replace(replace(replace(policy_file, ".yaml", ""), "-", "_"), "_", " ")
           )
+
         }
       )
     ]
@@ -49,11 +50,12 @@ resource "harness_platform_policyset" "policy_sets" {
       EOF
     }
   }
-  identifier = each.value.identifier
-  name       = each.value.name
-  action     = each.value.action
-  type       = each.value.type
-  enabled    = lookup(each.value, "enabled", true)
+  identifier  = each.value.identifier
+  name        = each.value.name
+  description = try(lookup(each.value, "description", null), "Harness UserGroup managed by Solutions Factory")
+  action      = each.value.action
+  type        = each.value.type
+  enabled     = lookup(each.value, "enabled", true)
 
   dynamic "policy_references" {
     for_each = lookup(each.value, "policies", [])

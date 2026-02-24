@@ -71,10 +71,9 @@ resource "harness_platform_usergroup" "usergroup" {
     for group in local.groups : group.identifier => group
   }
 
-  identifier = each.value.identifier
-
+  identifier  = each.value.identifier
   name        = each.value.name
-  description = "Harness UserGroup managed by Solutions Factory"
+  description = try(lookup(each.value, "description", null), "Harness UserGroup managed by Solutions Factory")
   user_emails = []
 
   externally_managed      = false

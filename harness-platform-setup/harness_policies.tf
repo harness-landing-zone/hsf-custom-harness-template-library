@@ -8,8 +8,12 @@ locals {
     for policy_file in local.policy_files : [
       {
         identifier = replace(replace(replace(policy_file, ".rego", ""), " ", "_"), "-", "_")
-        name       = replace(replace(replace(policy_file, ".rego", ""), "-", "_"), "_", " ")
-        payload    = file("${local.policies_files_path}/${policy_file}")
+        name = lookup(
+          try(yamldecode(file("${local.policies_files_path}/${policy_file}")), {}),
+          "name",
+          replace(replace(replace(policy_file, ".rego", ""), "-", "_"), "_", " ")
+        )
+        payload = file("${local.policies_files_path}/${policy_file}")
       }
     ]
   ])
@@ -34,7 +38,7 @@ resource "harness_platform_policy" "policies" {
   }
   identifier  = each.value.identifier
   name        = each.value.name
-  description = lookup(each.value, "description", "Harness Policy managed by Solutions Factory")
+  description = try(lookup(each.value, "description", null), "Harness UserGroup managed by Solutions Factory")
   rego        = each.value.payload
 
   tags = flatten([

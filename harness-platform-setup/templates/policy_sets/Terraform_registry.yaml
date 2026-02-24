@@ -1,4 +1,5 @@
 ---
+name: Mandatory Terraform Policy for Registry
 action: afterTerraformPlan
 type: terraformPlan
 enabled: true

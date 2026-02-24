@@ -1,41 +1,50 @@
 locals {
-  cloud_provider_connectors_files_path = "${local.source_directory}/cloud-provider-connectors"
-  cloud_provider_connector_files       = try(fileset("${local.cloud_provider_connectors_files_path}/", "*.yaml"), [])
+  connector_files_path = "${local.source_directory}/git-connectors"
 
-  cloud_provider_connectors = [
-    for connector_file in local.cloud_provider_connector_files : {
-      identifier = replace(replace(replace(connector_file, ".yaml", ""), " ", "_"), "-", "_")
-      name       = replace(replace(replace(connector_file, ".yaml", ""), "-", "_"), "_", " ")
-      file       = connector_file
-      cnf        = try(yamldecode(file("${local.cloud_provider_connectors_files_path}/${connector_file}")), {})
-    }
-  ]
+  connector_files = fileset("${local.connector_files_path}/", "*.yaml")
+
+  connectors = flatten([
+    for connector_file in local.connector_files : [
+      merge(
+        yamldecode(file("${local.connector_files_path}/${connector_file}")),
+        {
+          identifier = replace(replace(replace(connector_file, ".yaml", ""), " ", "_"), "-", "_")
+          name = lookup(
+            try(yamldecode(file("${local.connector_files_path}/${connector_file}")), {}),
+            "name",
+            replace(replace(replace(connector_file, ".yaml", ""), "-", "_"), "_", " ")
+          )
+        }
+      )
+    ]
+  ])
 }
 
-module "aws_cloud_provider_connector" {
-  source = "../modules/cloud-provider-connectors"
+
+
+module "git_connector" {
+  source = "../modules/git-connectors"
   for_each = {
-    for connector in local.cloud_provider_connectors : connector.identifier => connector
-    if lower(lookup(connector.cnf, "type", "")) == "aws"
+    for connector in local.connectors : connector.identifier => connector
   }
 
-  connector_name        = lookup(each.value.cnf, "name", each.value.name)
+  connector_type        = each.value.type
+  connector_name        = each.value.name
   connector_identifier  = each.value.identifier
-  connector_description = lookup(each.value.cnf, "description", "Harness AWS connector managed by Solutions Factory")
+  connector_description = try(lookup(each.value, "description", null), "Harness UserGroup managed by Solutions Factory")
   connector_tags = flatten([
-    [for k, v in lookup(each.value.cnf, "tags", {}) : "${k}:${v}"],
+    [for k, v in lookup(each.value, "tags", {}) : "${k}:${v}"],
     local.common_tags_tuple
   ])
 
-  execute_on_delegate = try(each.value.cnf.execute_on_delegate, false)
-  force_delete        = try(each.value.cnf.force_delete, false)
+  git_connector_url   = each.value.connector_url
+  connection_type     = each.value.connection_type
+  validation_repo     = try(each.value.validation_repo, null)
+  execute_on_delegate = try(each.value.execute_on_delegate, false)
+  delegate_selectors  = try(each.value.delegate_selectors, [])
 
-  aws_connector_oidc_authentication           = try(each.value.cnf.oidc_authentication, null)
-  aws_connector_manual_authentication         = try(each.value.cnf.manual_authentication, null)
-  aws_connector_inherit_from_delegate         = try(each.value.cnf.inherit_from_delegate, null)
-  aws_connector_irsa_authentication           = try(each.value.cnf.irsa_authentication, null)
-  aws_connector_cross_account_access          = try(each.value.cnf.cross_account_access, null)
-  aws_connector_equal_jitter_backoff_strategy = try(each.value.cnf.equal_jitter_backoff_strategy, null)
-  aws_connector_fixed_delay_backoff_strategy  = try(each.value.cnf.fixed_delay_backoff_strategy, null)
-  aws_connector_full_jitter_backoff_strategy  = try(each.value.cnf.full_jitter_backoff_strategy, null)
+  git_connector_http_credentials = try(each.value.http_credentials, null)
+  git_connector_ssh_credentials  = try(each.value.ssh_credentials, null)
+  git_connector_api_auth         = try(each.value.api_auth, null)
 }
+
