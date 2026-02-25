@@ -58,6 +58,12 @@ locals {
       patterns   = ["*.yaml"]
       key_fn     = "path"
     }
+    workspaces = {
+      global_dir = "${local.source_directory}/workspaces"
+      org_dir    = "${local.org_directory}/workspaces"
+      patterns   = ["*.yaml"]
+      key_fn     = "path"
+    }
   }
 
   # helper: compute the key for a given category + relative file
