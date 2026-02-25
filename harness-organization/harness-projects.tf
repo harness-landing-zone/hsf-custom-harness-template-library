@@ -11,7 +11,7 @@ module "harness_project" {
   }
   organization_id          = local.fmt_identifier
   templates_root           = "${local.platform_configs_dir}/templates"
-  org_root                 = "${local.platform_configs_dir}/organizations/${local.org_name}"
+  org_root                 = "${local.platform_configs_dir}/organizations/${var.organization_name}"
   project_key              = each.value.identifier
   harness_platform_account = var.harness_platform_account
   harness_platform_url     = var.harness_platform_url
