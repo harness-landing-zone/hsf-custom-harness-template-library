@@ -41,7 +41,6 @@
 # linked_sso_id: <your-sso-provider-id>
 # sso_group_id: <idp-developers-group-id>
 ########################
-scope_level: account
 name: Application One - Developers
 description: Developers of Application One
 tags:
