@@ -1,6 +1,5 @@
 locals {
-
-  source_directory = "${path.module}/templates"
+  source_directory = "${path.module}/${var.bootstrap_defaults}"
   org_directory    = "${var.org_root}/projects/${var.project_key}"
 
   categories = {

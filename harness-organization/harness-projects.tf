@@ -1,3 +1,9 @@
+locals {
+  org_bootstrap_default = try(
+    local.merged_sources["organizations"]["."].cnf.project_bootstrap_defaults,
+    null
+  )
+}
 
 module "harness_project" {
   depends_on = [data.harness_platform_organization.selected]
@@ -10,7 +16,11 @@ module "harness_project" {
     ) => p
   }
   organization_id          = local.fmt_identifier
-  templates_root           = "${local.platform_configs_dir}/templates"
+  templates_root = coalesce(
+    try(each.value.cnf.project_bootstrap_defaults, null),
+    local.org_bootstrap_default,
+    "templates"
+  )
   org_root                 = "${local.platform_configs_dir}/organizations/${var.organization_name}"
   project_key              = each.value.identifier
   harness_platform_account = var.harness_platform_account

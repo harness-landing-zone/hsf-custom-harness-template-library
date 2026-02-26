@@ -8,8 +8,8 @@ locals {
   categories = {
 
     organizations = {
-      global_dir = "${local.source_directory}/organizations"
-      org_dir    = "${local.org_directory}/organizations"
+      global_dir = local.source_directory
+      org_dir    = local.org_directory
       patterns   = ["**/config.yaml"]
       key_fn     = "folder"
     }
