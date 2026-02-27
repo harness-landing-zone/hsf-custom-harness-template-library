@@ -8,5 +8,5 @@ tags:
   purpose: deployment
 
 oidc_authentication:
-  iam_role_arn: "arn:aws:iam::664418987337:role/application-team-oidc-mk"
+  iam_role_arn: "arn:aws:iam::1234567890:role/application-team-oidc"
   region: "eu-west-2"

@@ -1,5 +1,5 @@
 description: "Test Organisation in Harness Account"
-name: "Example Org Two"
+name: "BUA-Team2"
 project_bootstrap_defaults: default-config-two
 tags:
   purpose: Testing Org Yaml Creation
