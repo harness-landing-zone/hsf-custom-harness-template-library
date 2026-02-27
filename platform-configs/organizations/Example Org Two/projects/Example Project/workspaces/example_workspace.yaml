@@ -16,7 +16,7 @@ repository_path: .
 repository_branch: main
 
 workspace_connectors:
-  - connector_ref: aws_account1
+  - connector_ref: aws-oidc-connector
     type: aws
 
 terraform_variables:
