@@ -1,0 +1,5 @@
+description: "Example Org One in Harness Account"
+name: "Example Org One"
+tags:
+  purpose: Testing Org Yaml Creation
+  owner: platform-team
