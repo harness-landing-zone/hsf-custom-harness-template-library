@@ -4,7 +4,7 @@ locals {
 
 module "iacm_workspace" {
   source     = "../modules/iacm-workspaces"
-  depends_on = [data.harness_platform_project.selected]
+  depends_on = [data.harness_platform_project.selected, module.git_connector, module.aws_cloud_provider_connector]
 
   for_each = {
     for ws in local.workspaces : ws.identifier => ws
