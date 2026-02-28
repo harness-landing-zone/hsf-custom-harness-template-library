@@ -1,0 +1,38 @@
+name: Workshop Developer
+description: >
+  Project-scoped developer role for Workshop org. Intentionally excludes
+  core_pipeline_create and core_pipeline_edit — OPA provides the second
+  enforcement layer. Developers consume account-level templates only.
+permissions: [
+  # Pipeline — execute and view only. NO create/edit.
+  "core_pipeline_view",
+  "core_pipeline_execute",
+  "core_pipeline_abort",
+
+  # Input Sets — developers own their input sets (template customisation)
+  "core_inputset_view",
+  "core_inputset_edit",
+  "core_inputset_delete",
+
+  # Templates — READ ONLY, consume account-level template
+  "core_template_view",
+  "core_template_access",
+
+  # Environments (PreProd only — enforced by Resource Group)
+  "core_environment_view",
+  "core_environment_access",
+
+  # Services / Connectors / Secrets
+  "core_service_view",
+  "core_service_access",
+  "core_connector_view",
+  "core_connector_access",
+  "core_secret_view",
+  "core_secret_access",
+
+  # IDP self-service
+  "idp_workflow_view",
+  "idp_workflow_execute",
+  "idp_catalog_view",
+  "idp_scorecard_view",
+]

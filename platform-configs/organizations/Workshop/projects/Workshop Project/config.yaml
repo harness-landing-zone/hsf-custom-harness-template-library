@@ -1,0 +1,7 @@
+name: Workshop Project
+description: >
+  HSF workshop demo project. Provisioned via IDP self-service workflow.
+  Inherits Workshop org OPA policy for pipeline governance.
+tags:
+  purpose: workshop-demo
+  managed-by: hsf

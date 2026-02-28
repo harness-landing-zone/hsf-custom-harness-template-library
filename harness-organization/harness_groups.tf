@@ -28,8 +28,6 @@ locals {
   ])
 }
 
-
-
 data "harness_platform_usergroup" "usergroup" {
   for_each = {
     for group in local.existing_groups : group.identifier => group

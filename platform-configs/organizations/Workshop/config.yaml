@@ -1,0 +1,7 @@
+name: Workshop
+description: >
+  Workshop demonstration org. OPA pipeline governance is enforced
+  at this org scope — all projects inherit the policy set.
+tags:
+  purpose: workshop
+  managed-by: hsf
