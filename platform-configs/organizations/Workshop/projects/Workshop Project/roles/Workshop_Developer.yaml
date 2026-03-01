@@ -8,6 +8,7 @@ permissions: [
   "core_pipeline_view",
   "core_pipeline_execute",
   "core_pipeline_abort",
+  "core_template_create",
 
   # Input Sets — developers own their input sets (template customisation)
   "core_inputset_view",

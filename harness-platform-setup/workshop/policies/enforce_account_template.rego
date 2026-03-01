@@ -1,22 +1,20 @@
 package pipeline
 
+# Define the target Organization ID
+restricted_org := "Workshop"
+
 deny[msg] {
-    # Scope check: Only apply for the workshop organization
-    input.pipeline.orgIdentifier == "workshop"
-
-    # Violation check 1: No template present
-    not input.pipeline.template
-
-    msg := "HSF WARNING: Direct YAML pipelines are detected in the Workshop Org. Best practice is to use an Account-Level Template."
+    # 1. Check if the pipeline belongs to the 'Workshop' Org
+    input.pipeline.orgIdentifier == restricted_org
+    
+    # 2. Check if the pipeline is NOT using an Account-level template
+    not is_account_template(input.pipeline)
+    
+    msg := "Access Denied: In the 'Workshop' organization, pipelines must be created from an Account-level Template."
 }
 
-deny[msg] {
-    # Scope check: Only apply for the workshop organization
-    input.pipeline.orgIdentifier == "workshop"
-
-    # Violation check 2: Template exists but isn't the 'Gold Standard'
-    input.pipeline.template
-    input.pipeline.template.identifier != "hsf_standard_web_service"
-
-    msg := "HSF WARNING: Using template '" + input.pipeline.template.identifier + "'. Note: 'hsf_standard_web_service' is the recommended standard for this Workshop."
+# Helper rule to verify the template reference
+is_account_template(p) {
+    # Ensure the template object exists and the reference starts with 'account.'
+    startswith(p.template.templateRef, "account.")
 }
