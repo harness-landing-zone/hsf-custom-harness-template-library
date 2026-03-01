@@ -3,3 +3,5 @@ name: Workshop Developers
 role_bindings:
   - role: Workshop_Developer
     resource_group: _all_project_level_resources
+  - role: _project_viewer
+    resource_group: _all_project_level_resources
