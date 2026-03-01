@@ -1,0 +1,7 @@
+name: Workshop Developers
+description: Org-level group for all workshop attendees. Project role bindings happen per-project.
+tags:
+  purpose: workshop
+role_bindings: []
+# No org-level role bindings — permissions are granted at the project scope
+# This group is inherited into each project and bound to Workshop_Developer role there

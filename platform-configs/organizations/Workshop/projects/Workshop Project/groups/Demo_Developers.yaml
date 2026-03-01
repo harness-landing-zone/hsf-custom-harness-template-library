@@ -2,4 +2,4 @@ scope_level: account
 name: Workshop Developers
 role_bindings:
   - role: Workshop_Developer
-    resource_group: Developer_Resources
+    resource_group: _all_project_level_resources
