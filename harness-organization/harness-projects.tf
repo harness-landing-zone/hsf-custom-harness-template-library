@@ -19,7 +19,7 @@ module "harness_project" {
   templates_root = coalesce(
     try(each.value.cnf.project_bootstrap_defaults, null),
     local.org_bootstrap_default,
-    "templates"
+    var.default_project_template
   )
   org_root                 = "${local.platform_configs_dir}/organizations/${var.organization_name}"
   project_key              = each.value.identifier
