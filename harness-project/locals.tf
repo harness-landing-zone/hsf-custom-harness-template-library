@@ -2,7 +2,7 @@ locals {
   required_tags = {
     created_by : "Terraform"
     harnessSolutionsFactory : "true"
-    template: var.templates_root
+    template: local.default_project_template
   }
 
   common_tags = merge(
@@ -40,4 +40,5 @@ locals {
 
   # Use the name from config.yaml if defined, otherwise fall back to the variable.
   project_name = try(local.project_config.name, var.project_name)
+  default_project_template = try(local.project_config.default_project_template, var.default_project_template)
 }

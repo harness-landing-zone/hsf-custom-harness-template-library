@@ -2,7 +2,7 @@ locals {
   required_tags = {
     created_by : "Terraform"
     harnessSolutionsFactory : "true"
-    template: var.default_org_template
+    template: local.default_org_template
   }
 
   common_tags = merge(
@@ -34,11 +34,11 @@ locals {
   # Attempt to read the org-level config.yaml if it exists.
   # Falls back to an empty map if the file is not present.
   org_config = try(
-    yamldecode(file("${local.org_directory}/config.yaml")),
-    {}
+    yamldecode(file("${local.org_directory}/config.yaml")),{}
   )
 
   # Use the name from config.yaml if defined, otherwise fall back to the variable.
   org_name = try(local.org_config.name, var.organization_name)
-
+  default_org_template = try(local.org_config.default_org_template, var.default_org_template)
+  default_project_template = try(local.org_config.default_project_template, null)
 }

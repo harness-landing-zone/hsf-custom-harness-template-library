@@ -38,9 +38,3 @@ variable "default_org_template" {
   description = "The Default config template that will be used for all the Organizations"
   default = "templates"
 }
-
-variable "default_project_template" {
-  type = string
-  description = "The Default config template that will be used for all the projects"
-  default = "templates"
-}

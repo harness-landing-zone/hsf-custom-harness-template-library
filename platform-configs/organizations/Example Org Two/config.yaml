@@ -1,5 +1,5 @@
-description: "Test Organisation in Harness Account"
+description: "Example Org Two"
 name: "Example Org Two"
 tags:
-  purpose: Testing Org Yaml Creation
+  purpose: Testing Project Yaml Creation
   owner: platform-team
