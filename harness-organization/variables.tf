@@ -33,12 +33,8 @@ variable "tags" {
   default     = {}
 }
 
-variable "projects" {
-  description = "Optional list of projects to create under the org"
-  type = list(object({
-    project_name        = string
-    project_identifier  = optional(string)
-    project_description = optional(string)
-  }))
-  default = []
+variable "default_org_template" {
+  type = string
+  description = "The Default config template that will be used for all the Organizations"
+  default = "templates"
 }

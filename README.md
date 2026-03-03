@@ -114,7 +114,7 @@ platform-configs/
 
 For `harness-organization` and `harness-project`, every resource category is merged from two sources:
 
-1. **Global defaults** — `<entrypoint>/templates/<category>/`
+1. **Global defaults** — `<entrypoint>/<template_folder>/<category>/` where `<template_folder>` defaults to `templates` and is configurable via the `default_org_template` / `default_project_template` variable or `config.yaml` field.
 2. **Org or project overrides** — `platform-configs/organizations/<org>/<category>/` (or `.../projects/<project>/<category>/`)
 
 When a file exists in both locations with the **same relative path**, the org/project version wins. Files only in the global defaults are included unchanged. This means you can ship sensible defaults in `templates/` and only place YAML files in `platform-configs/` for what you want to change or add.
@@ -135,6 +135,10 @@ The Harness resource identifier is derived from the **filename** (without `.yaml
 name: "My Organization"           # Display name
 description: "..."                # Optional
 identifier: "my_org"              # Optional — overrides filename-derived identifier
+default_org_template: "templates-two"     # Optional — org-level template folder to use instead of the default "templates"
+default_project_template: "templates-two" # Optional — project-level template folder to use for all projects under this org,
+                                          #            or for a specific project when set in that project's config.yaml.
+                                          #            Priority: project config.yaml > org config.yaml > variable default
 tags:
   owner: platform-team
   env: prod

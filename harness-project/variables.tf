@@ -38,10 +38,11 @@ variable "tags" {
   default     = {}
 }
 
-variable "templates_root" {
+variable "default_project_template" {
   type = string
-  default = "templates"
   description = "Defining the Default folder where we will use to bootstrap projects"
+  nullable    = false
+  default = "templates"
 }
 
 variable "org_root" {

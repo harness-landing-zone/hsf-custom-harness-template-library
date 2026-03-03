@@ -1,5 +1,5 @@
 locals {
-  source_directory = "${path.module}/${var.templates_root}"
+  source_directory = "${path.module}/${local.default_project_template}"
   org_directory    = "${var.org_root}/projects/${var.project_key}"
 
   categories = {
@@ -104,8 +104,4 @@ locals {
     )
   }
 
-}
-
-output "merged_sources" {
-  value = local.merged_sources
 }
