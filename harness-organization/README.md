@@ -59,6 +59,7 @@ _Note: When providing `_ref` values, please ensure that these are prefixed with 
 | organization_id || New Organization Identifier. If not provided, then the organization_name will be formatted to replace spaces and dashes with underscores | string | null |
 | organization_name | X | New Organization Name | string ||
 | organization_description || New Organnization Description | string | "Harness Organnization managed by Solutions Factory" |
+| default_org_template | | Name of the template folder inside `harness-organization/` used as the default set of org-level resources. Can be overridden per-org via `default_org_template` in `config.yaml`. | string | `"templates"` |
 | tags | | Provide a Map of Tags to associate with the resources | map(any) |{}|
 
 

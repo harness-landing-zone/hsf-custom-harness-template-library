@@ -64,6 +64,7 @@ _Note: When providing `_ref` values, please ensure that these are prefixed with 
 | project_id || New Project Identifier. If not provided, then the project_name will be formatted to replace spaces and dashes with underscores | string |null|
 | project_name | X | New Project Name | string ||
 | project_description | | New Project Description | string | Harness Project managed by Solutions Factory |
+| default_project_template | | Name of the template folder inside `harness-project/` used as the default set of project-level resources. Resolved in priority order: project `config.yaml` → org `config.yaml` → this variable. | string | `"templates"` |
 | tags | | Provide a Map of Tags to associate with the resources | map(any) |{}|
 
 
