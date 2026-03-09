@@ -1,7 +1,7 @@
 locals {
   # Resolve platform-configs from the repo root (sibling of harness-organization),
   # independent of the current working directory.
-  platform_configs_dir = abspath("${path.module}/../platform-configs")
+  platform_configs_dir = abspath("${path.module}/${var.configs_relative_path}")
   source_directory     = "${path.module}/${local.default_org_template}"
   org_directory        = "${local.platform_configs_dir}/organizations/${var.organization_name}"
 

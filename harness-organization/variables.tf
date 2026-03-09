@@ -38,3 +38,9 @@ variable "default_org_template" {
   description = "The Default config template that will be used for all the Organizations"
   default = "templates"
 }
+
+variable "configs_relative_path" {
+  type = string
+  description = "Relative path to the platform-configs directory from this module. This is used to resolve the organization configuration files, independent of the current working directory."
+  default = "../platform-configs"
+}
