@@ -63,24 +63,34 @@ locals {
       patterns   = ["*.yaml"]
       key_fn     = "path"
     }
+    services = {
+      global_dir = "${local.source_directory}/services"
+      org_dir    = "${local.org_directory}/services"
+      patterns   = ["*.yaml"]
+      key_fn     = "path"
+    }
+
+    pipelines = {
+      global_dir = "${local.source_directory}/pipelines"
+      org_dir    = "${local.org_directory}/pipelines"
+      patterns   = ["*.yaml"]
+      key_fn     = "path"
+    }
   }
 
-  # helper: compute the key for a given category + relative file
-  # - "path"           -> "dev.yaml" / "team/a.yaml" / "project1/config.yaml"
-  # - "folder" -> "project1" from "project1/config.yaml"
   merged_sources = {
     for cat, cfg in local.categories :
     cat => merge(
       {
         for rel in distinct(flatten([for p in cfg.patterns : try(fileset(cfg.global_dir, p), [])])) :
         (cfg.key_fn == "folder" ? basename(dirname(rel)) : replace(rel, ".yaml", "")) => {
-          origin     = "global"
+          origin = "global"
           name = lookup(
             try(yamldecode(file("${cfg.global_dir}/${rel}")), {}),
             "name",
             cfg.key_fn == "folder" ? basename(dirname(rel)) : replace(rel, ".yaml", "")
           )
-          identifier = cfg.key_fn == "project_folder" ? basename(dirname(rel)) : replace(replace(replace(rel, ".yaml", ""), " ", "_"), "-", "_")
+          identifier = cfg.key_fn == "folder" ? basename(dirname(rel)) : replace(replace(replace(rel, ".yaml", ""), " ", "_"), "-", "_")
           dir        = cfg.global_dir
           file       = rel
           cnf        = try(yamldecode(file("${cfg.global_dir}/${rel}")), {})
@@ -89,13 +99,13 @@ locals {
       {
         for rel in distinct(flatten([for p in cfg.patterns : try(fileset(cfg.org_dir, p), [])])) :
         (cfg.key_fn == "folder" ? basename(dirname(rel)) : replace(rel, ".yaml", "")) => {
-          origin     = "org"
+          origin = "org"
           name = lookup(
             try(yamldecode(file("${cfg.org_dir}/${rel}")), {}),
             "name",
             cfg.key_fn == "folder" ? basename(dirname(rel)) : replace(rel, ".yaml", "")
           )
-          identifier = cfg.key_fn == "project_folder" ? basename(dirname(rel)) : replace(replace(replace(rel, ".yaml", ""), " ", "_"), "-", "_")
+          identifier = cfg.key_fn == "folder" ? basename(dirname(rel)) : replace(replace(replace(rel, ".yaml", ""), " ", "_"), "-", "_")
           dir        = cfg.org_dir
           file       = rel
           cnf        = try(yamldecode(file("${cfg.org_dir}/${rel}")), {})

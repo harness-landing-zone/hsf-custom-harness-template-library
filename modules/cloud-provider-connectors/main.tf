@@ -10,7 +10,7 @@ resource "harness_platform_connector_aws" "aws" {
     ? var.connector_description
     : null
   )
-  tags        = toset(try(var.connector_tags, []))
+  tags = toset(try(var.connector_tags, []))
 
   # Optional scoping (account-level if both are null)
   org_id              = var.org_id != null && trimspace(var.org_id) != "" ? var.org_id : null

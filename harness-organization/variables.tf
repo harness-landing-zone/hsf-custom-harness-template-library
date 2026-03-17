@@ -34,13 +34,24 @@ variable "tags" {
 }
 
 variable "default_org_template" {
-  type = string
+  type        = string
   description = "The Default config template that will be used for all the Organizations"
-  default = "templates"
+  default     = "templates"
 }
 
 variable "configs_relative_path" {
-  type = string
+  type        = string
   description = "Relative path to the platform-configs directory from this module. This is used to resolve the organization configuration files, independent of the current working directory."
-  default = "../platform-configs"
+  default     = "../platform-configs"
+}
+
+##############################################################################
+# Secrets
+##############################################################################
+
+variable "secret_values" {
+  type        = map(string)
+  sensitive   = true
+  description = "[Optional] Map of secret identifier → plaintext value for secrets defined in platform-configs secrets/ directories. Keys must match the identifier of each secrets/*.yaml entry."
+  default     = {}
 }

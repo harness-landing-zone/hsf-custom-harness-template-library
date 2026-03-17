@@ -9,7 +9,7 @@ module "harness_project" {
       replace(replace(p.name, " ", "_"), "-", "_")
     ) => p
   }
-  organization_id          = local.fmt_identifier
+  organization_id = local.fmt_identifier
   default_project_template = try(coalesce(
     # If the config is defined in the projects/<project_name>/config.yaml
     try(each.value.cnf.default_project_template, null),
@@ -17,6 +17,7 @@ module "harness_project" {
     local.default_project_template
   ), null)
 
+  configs_root             = local.platform_configs_dir
   org_root                 = "${local.platform_configs_dir}/organizations/${var.organization_name}"
   project_key              = each.value.name
   harness_platform_account = var.harness_platform_account

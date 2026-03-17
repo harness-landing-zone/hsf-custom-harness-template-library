@@ -39,10 +39,10 @@ variable "tags" {
 }
 
 variable "default_project_template" {
-  type = string
+  type        = string
   description = "Defining the Default folder where we will use to bootstrap projects"
   nullable    = false
-  default = "templates"
+  default     = "templates"
 }
 
 variable "org_root" {
@@ -53,4 +53,10 @@ variable "org_root" {
 variable "project_key" {
   type    = string
   default = ""
+}
+
+variable "configs_root" {
+  type        = string
+  description = "Absolute path to the platform-configs root (e.g. hsf-platform-bootstrap). Used to locate .harness/ pipeline YAML files."
+  default     = ""
 }

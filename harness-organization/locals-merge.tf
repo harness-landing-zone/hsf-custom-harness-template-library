@@ -79,6 +79,13 @@ locals {
       key_fn     = "path"
     }
 
+    secrets = {
+      global_dir = "${local.source_directory}/secrets"
+      org_dir    = "${local.org_directory}/secrets"
+      patterns   = ["*.yaml"]
+      key_fn     = "path"
+    }
+
   }
 
   merged_sources = {
@@ -87,7 +94,7 @@ locals {
       {
         for rel in distinct(flatten([for p in cfg.patterns : try(fileset(cfg.global_dir, p), [])])) :
         (cfg.key_fn == "folder" ? basename(dirname(rel)) : replace(rel, ".yaml", "")) => {
-          origin     = "global"
+          origin = "global"
           name = lookup(
             try(yamldecode(file("${cfg.global_dir}/${rel}")), {}),
             "name",
@@ -102,7 +109,7 @@ locals {
       {
         for rel in distinct(flatten([for p in cfg.patterns : try(fileset(cfg.org_dir, p), [])])) :
         (cfg.key_fn == "folder" ? basename(dirname(rel)) : replace(rel, ".yaml", "")) => {
-          origin     = "org"
+          origin = "org"
           name = lookup(
             try(yamldecode(file("${cfg.org_dir}/${rel}")), {}),
             "name",
