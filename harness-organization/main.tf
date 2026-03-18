@@ -1,7 +1,7 @@
 resource "harness_platform_organization" "selected" {
-  identifier  = local.fmt_identifier
+  identifier  = local.org_identifier
   name        = local.org_name
-  description = var.organization_description
+  description = local.org_description
 
   tags = local.common_tags_tuple
 }

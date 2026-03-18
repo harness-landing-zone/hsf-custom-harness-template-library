@@ -14,7 +14,7 @@ locals {
   # converted into a list of key:value entries
   common_tags_tuple = [for k, v in local.common_tags : "${k}:${v}"]
 
-
+# Make the name As unique ID.
   fmt_identifier = (
     var.organization_id == null
     ?
@@ -39,6 +39,8 @@ locals {
 
   # Use the name from config.yaml if defined, otherwise fall back to the variable.
   org_name                 = try(local.org_config.name, var.organization_name)
+  org_identifier           = try(local.org_config.identifier, local.fmt_identifier)
+  org_description          = try(local.org_config.description, var.organization_description)
   default_org_template     = try(local.org_config.default_org_template, var.default_org_template)
   default_project_template = try(local.org_config.default_project_template, null)
 }

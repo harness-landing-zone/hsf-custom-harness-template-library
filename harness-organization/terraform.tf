@@ -10,9 +10,9 @@ terraform {
     }
   }
 
-  backend "gcs" {
-    bucket = "harness-backend-mk"
+  # backend "gcs" {
+  #   bucket = "harness-backend-mk"
 
-    prefix = "harness/bootstrap"
-  }
+  #   prefix = "harness/bootstrap"
+  # }
 }
