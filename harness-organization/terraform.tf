@@ -9,10 +9,4 @@ terraform {
       version = "~> 0.9.1"
     }
   }
-
-  # backend "gcs" {
-  #   bucket = "harness-backend-mk"
-
-  #   prefix = "harness/bootstrap"
-  # }
 }
