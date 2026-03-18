@@ -56,7 +56,7 @@ variable "project_key" {
 }
 
 variable "configs_root" {
-  type        = string
-  description = "Absolute path to the platform-configs root (e.g. hsf-platform-bootstrap). Used to locate .harness/ pipeline YAML files."
-  default     = ""
+  type = string
+  default = ""
+  description = "The Root of the Configuration folder"
 }

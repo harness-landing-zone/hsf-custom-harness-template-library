@@ -20,10 +20,10 @@ resource "harness_platform_pipeline" "pipelines" {
   yaml = replace(
     replace(
       file("${var.configs_root}/.harness/${lookup(each.value.cnf, "yaml_source", each.value.identifier)}.yaml"),
-      "orgIdentifier: default",
+      "orgIdentifier: org_id",
       "orgIdentifier: ${data.harness_platform_organization.selected.id}"
     ),
-    "projectIdentifier: default",
+    "projectIdentifier: project_id",
     "projectIdentifier: ${data.harness_platform_project.selected.id}"
   )
 }
