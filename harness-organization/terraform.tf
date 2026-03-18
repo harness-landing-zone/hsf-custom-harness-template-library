@@ -9,4 +9,5 @@ terraform {
       version = "~> 0.9.1"
     }
   }
+  backend "gcs" {}
 }
