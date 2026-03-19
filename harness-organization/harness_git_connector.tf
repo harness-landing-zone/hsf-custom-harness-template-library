@@ -29,8 +29,7 @@ module "git_connector" {
   execute_on_delegate = try(each.value.cnf.execute_on_delegate, false)
   delegate_selectors  = try(each.value.cnf.delegate_selectors, [])
 
-  git_connector_http_credentials = try(each.value.cnf.http_credentials, try(each.value.http_credentials, null))
-  git_connector_ssh_credentials  = try(each.value.cnf.ssh_credentials, try(each.value.ssh_credentials, null))
-  git_connector_api_auth         = try(each.value.cnf.api_auth, try(each.value.api_auth, null))
+  git_connector_http_credentials = try(each.value.cnf.http_credentials, try(var.git_connector_credentials[each.key].http_credentials, null))
+  git_connector_ssh_credentials  = try(each.value.cnf.ssh_credentials, try(var.git_connector_credentials[each.key].ssh_credentials, null))
+  git_connector_api_auth         = try(each.value.cnf.api_auth, try(var.git_connector_credentials[each.key].api_auth, null))
 }
-

@@ -1,8 +1,0 @@
-harness_platform_account = "<YOUR_ACCOUNT_ID>"
-
-# Optional — defaults to Harness SaaS
-# harness_platform_url = "https://app.harness.io/gateway"
-
-# Before running:
-# 1. Copy providers.tf.example → providers.tf and fill in credentials
-# 2. Place the GitHub App private key PEM at: pem/harness_lz_key.pem

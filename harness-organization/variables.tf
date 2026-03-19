@@ -61,3 +61,14 @@ variable "secret_values" {
   description = "[Optional] Map of secret identifier → plaintext value for secrets defined in platform-configs secrets/ directories. Keys must match the identifier of each secrets/*.yaml entry."
   default     = {}
 }
+
+variable "git_connector_credentials" {
+  type = map(object({
+    http_credentials = optional(any, null)
+    ssh_credentials  = optional(any, null)
+    api_auth         = optional(any, null)
+  }))
+  sensitive   = true
+  description = "[Optional] Credentials for git connectors keyed by connector identifier. Use terraform.tfvars (gitignored) instead of embedding credentials in YAML. Takes effect only when the connector YAML does not define the credential block."
+  default     = {}
+}

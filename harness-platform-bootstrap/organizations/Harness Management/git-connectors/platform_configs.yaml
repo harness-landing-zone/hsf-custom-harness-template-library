@@ -9,11 +9,5 @@ execute_on_delegate: false
 connector_url: https://github.com/harness-landing-zone
 connection_type: Account
 validation_repo: hsf-platform-bootstrap
-http_credentials:
-  github_app:
-    application_id: "2780955"
-    installation_id: "107783082"
-    # org-scoped secret created by harness_secrets.tf from pem/github_app_private_key.pem
-    private_key_ref: org.harness_lz_key
 api_auth:
   github_app_api: true
