@@ -10,20 +10,22 @@ resource "harness_platform_pipeline" "pipelines" {
     coalesce(try(p.cnf.identifier, null), p.identifier) => p
   }
 
-  identifier  = coalesce(try(each.value.cnf.identifier, null), each.value.identifier)
-  name        = each.value.name
-  org_id      = data.harness_platform_organization.selected.id
-  project_id  = data.harness_platform_project.selected.id
-  description = lookup(each.value.cnf, "description", "Pipeline managed by Solutions Factory")
-  # Load the raw Harness pipeline YAML from .harness/ in the template library root,
-  # then inject the actual org and project identifiers created above.
-  yaml = replace(
-    replace(
-      file("${var.configs_root}/.harness/${lookup(each.value.cnf, "yaml_source", each.value.identifier)}.yaml"),
-      "orgIdentifier: org_id",
-      "orgIdentifier: ${data.harness_platform_organization.selected.id}"
-    ),
-    "projectIdentifier: project_id",
-    "projectIdentifier: ${data.harness_platform_project.selected.id}"
-  )
+  identifier      = coalesce(try(each.value.cnf.identifier, null), each.value.identifier)
+  name            = each.value.name
+  org_id          = data.harness_platform_organization.selected.id
+  project_id      = data.harness_platform_project.selected.id
+  description     = lookup(each.value.cnf, "description", "Pipeline managed by Solutions Factory")
+  import_from_git = true
+
+  git_import_info {
+    branch_name   = lookup(each.value.cnf, "git_branch", "main")
+    file_path     = lookup(each.value.cnf, "git_file_path", ".harness/${each.key}.yaml")
+    connector_ref = lookup(each.value.cnf, "git_connector_ref", "")
+    repo_name     = lookup(each.value.cnf, "git_repo_name", "")
+  }
+
+  pipeline_import_request {
+    pipeline_name        = each.value.name
+    pipeline_description = lookup(each.value.cnf, "description", "Pipeline managed by Solutions Factory")
+  }
 }
