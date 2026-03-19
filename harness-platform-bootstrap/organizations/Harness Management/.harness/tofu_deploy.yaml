@@ -1,0 +1,348 @@
+pipeline:
+  name: Tofu Deploy
+  identifier: tofu_deploy
+  projectIdentifier: platform_management
+  orgIdentifier: platform_management
+  tags: {}
+  properties:
+    ci:
+      codebase:
+        connectorRef: <+input>
+        repoName: hsf-custom-harness-template-library
+        build: <+input>
+  variables:
+    - name: entrypoint
+      type: String
+      description: tofu entrypoint directory to run
+      required: true
+      value: <+input>.allowedValues(harness-platform-bootstrap,harness-organization,harness-project,harness-platform-setup)
+    - name: tofu_action
+      type: String
+      description: tofu action to execute
+      required: true
+      value: <+input>.allowedValues(plan,apply,destroy)
+    - name: gcs_bucket
+      type: String
+      description: GCS bucket name for tofu remote state storage
+      required: true
+      value: <+input>
+    - name: gcp_project
+      type: String
+      description: GCP project ID (numeric or string) used for OIDC token exchange and GCS backend
+      required: true
+      value: <+input>
+    - name: gcp_pool_id
+      type: String
+      description: GCP Workload Identity Pool ID for OIDC authentication
+      required: true
+      value: <+input>
+    - name: gcp_provider_id
+      type: String
+      description: GCP Workload Identity Provider ID for OIDC authentication
+      required: true
+      value: <+input>
+    - name: gcp_service_account_email
+      type: String
+      description: GCP service account email for OIDC token exchange
+      required: true
+      value: <+input>
+    - name: organization_name
+      type: String
+      description: Organization name to manage — must match the folder name in platform-configs (leave empty for platform-setup)
+      required: false
+      value: <+input>
+    - name: project_name
+      type: String
+      description: Project name — required only when entrypoint is harness-project (must match the folder name in platform-configs)
+      required: false
+      value: <+input>
+    - name: platform_configs_repo
+      type: String
+      description: Platform configs repo to clone for org/project overrides (leave empty to use template defaults only)
+      required: false
+      value: <+input>
+  stages:
+    - stage:
+        name: tofu Plan
+        identifier: tofu_plan
+        description: Clone repos and run tofu plan
+        type: CI
+        spec:
+          cloneCodebase: true
+          caching:
+            enabled: true
+            override: true
+          platform:
+            os: Linux
+            arch: Amd64
+          runtime:
+            type: Cloud
+            spec: {}
+          execution:
+            steps:
+              - step:
+                  type: GitClone
+                  name: Clone Platform Configs
+                  identifier: clone_platform_configs_plan
+                  spec:
+                    connectorRef: org.platform_configs
+                    repoName: <+pipeline.variables.platform_configs_repo>
+                    build:
+                      type: branch
+                      spec:
+                        branch: main
+                    cloneDirectory: /harness/platform-configs/hsf-platform-bootstrap
+                  timeout: 10m
+                  when:
+                    stageStatus: Success
+                    condition: '<+pipeline.variables.platform_configs_repo> != ""'
+                  failureStrategies:
+                    - onFailure:
+                        errors:
+                          - AllErrors
+                        action:
+                          type: Abort
+              - step:
+                  type: Plugin
+                  name: GCP OIDC Token
+                  identifier: gcp_oidc_token_plan
+                  spec:
+                    connectorRef: account.harnessImage
+                    image: plugins/gcp-oidc
+                    settings:
+                      project_id: <+pipeline.variables.gcp_project>
+                      pool_id: <+pipeline.variables.gcp_pool_id>
+                      provider_id: <+pipeline.variables.gcp_provider_id>
+                      service_account_email_id: <+pipeline.variables.gcp_service_account_email>
+                      duration: 3600
+                      create_application_credentials_file: false
+                  timeout: 5m
+                  failureStrategies:
+                    - onFailure:
+                        errors:
+                          - AllErrors
+                        action:
+                          type: Abort
+              - step:
+                  type: Run
+                  name: tofu Init and Plan
+                  identifier: tofu_init_plan
+                  spec:
+                    connectorRef: account.harnessImage
+                    image: ghcr.io/opentofu/opentofu:latest
+                    shell: Sh
+                    command: |
+                      set -e
+                      ls /harness
+                      cd /harness/<+pipeline.variables.entrypoint>
+
+                      # Use platform-configs overrides if the repo was cloned, else use template defaults
+                      if [ -d "/harness/platform-configs/hsf-platform-bootstrap" ]; then
+                        export TF_VAR_configs_relative_path="../platform-configs/hsf-platform-bootstrap"
+                      fi
+
+                      # Compute state prefix based on entrypoint
+                      case "<+pipeline.variables.entrypoint>" in
+                        "harness-platform-bootstrap")
+                          STATE_PREFIX="harness/bootstrap"
+                          ;;
+                        "harness-organization")
+                          STATE_PREFIX="harness/<+pipeline.variables.organization_name>"
+                          ;;
+                        "harness-platform-setup")
+                          STATE_PREFIX="harness/Account"
+                          ;;
+                        "harness-project")
+                          STATE_PREFIX="harness/<+pipeline.variables.organization_name>/<+pipeline.variables.project_name>"
+                          ;;
+                      esac
+
+                      tofu init \
+                        -backend-config="bucket=<+pipeline.variables.gcs_bucket>" \
+                        -backend-config="prefix=${STATE_PREFIX}"
+
+                      if [ "<+pipeline.variables.tofu_action>" = "destroy" ]; then
+                        tofu plan -destroy
+                      else
+                        tofu plan
+                      fi
+                    envVariables:
+                      HARNESS_PLATFORM_API_KEY: <+secrets.getValue("account.harness_platform_api_key")>
+                      HARNESS_ACCOUNT_ID: <+account.identifier>
+                      GOOGLE_OAUTH_ACCESS_TOKEN: <+steps.gcp_oidc_token_plan.output.outputVariables.GCLOUD_ACCESS_TOKEN>
+                      TF_VAR_harness_platform_account: <+account.identifier>
+                      TF_VAR_organization_name: <+pipeline.variables.organization_name>
+                      TF_VAR_project_name: <+pipeline.variables.project_name>
+                  timeout: 30m
+                  failureStrategies:
+                    - onFailure:
+                        errors:
+                          - AllErrors
+                        action:
+                          type: Abort
+        failureStrategies:
+          - onFailure:
+              errors:
+                - AllErrors
+              action:
+                type: Abort
+    - stage:
+        name: Approval
+        identifier: approval_gate
+        description: Manual approval required before tofu apply or destroy
+        type: Approval
+        spec:
+          execution:
+            steps:
+              - step:
+                  name: Approve tofu Apply
+                  identifier: approve_tofu_apply
+                  type: HarnessApproval
+                  timeout: 1d
+                  spec:
+                    approvalMessage: |-
+                      Please review the tofu plan before proceeding.
+
+                        Entrypoint        : <+pipeline.variables.entrypoint>
+                        Action            : <+pipeline.variables.tofu_action>
+                        Organization      : <+pipeline.variables.organization_name>
+                        Project           : <+pipeline.variables.project_name>
+
+                      Review the plan output in Stage 1 (tofu Plan) and approve only
+                      if the changes are expected and safe to apply.
+                    includePipelineExecutionHistory: true
+                    approvers:
+                      userGroups:
+                        - <+input>
+                      minimumCount: 1
+                      disallowPipelineExecutor: false
+                    approverInputs: []
+        when:
+          pipelineStatus: Success
+          condition: '<+pipeline.variables.tofu_action> != "plan"'
+    - stage:
+        name: tofu Apply
+        identifier: tofu_apply
+        description: Clone repos and run tofu apply or destroy
+        type: CI
+        spec:
+          cloneCodebase: true
+          caching:
+            enabled: true
+            override: true
+          platform:
+            os: Linux
+            arch: Amd64
+          runtime:
+            type: Cloud
+            spec: {}
+          execution:
+            steps:
+              - step:
+                  type: GitClone
+                  name: Clone Platform Configs
+                  identifier: clone_platform_configs_apply
+                  spec:
+                    connectorRef: org.platform_configs
+                    repoName: <+pipeline.variables.platform_configs_repo>
+                    build:
+                      type: branch
+                      spec:
+                        branch: main
+                    cloneDirectory: /harness/platform-configs/hsf-platform-bootstrap
+                  timeout: 10m
+                  when:
+                    stageStatus: Success
+                    condition: '<+pipeline.variables.platform_configs_repo> != ""'
+                  failureStrategies:
+                    - onFailure:
+                        errors:
+                          - AllErrors
+                        action:
+                          type: Abort
+              - step:
+                  type: Plugin
+                  name: GCP OIDC Token
+                  identifier: gcp_oidc_token_apply
+                  spec:
+                    connectorRef: account.harnessImage
+                    image: plugins/gcp-oidc
+                    settings:
+                      project_id: <+pipeline.variables.gcp_project>
+                      pool_id: <+pipeline.variables.gcp_pool_id>
+                      provider_id: <+pipeline.variables.gcp_provider_id>
+                      service_account_email_id: <+pipeline.variables.gcp_service_account_email>
+                      duration: 3600
+                      create_application_credentials_file: false
+                  timeout: 5m
+                  failureStrategies:
+                    - onFailure:
+                        errors:
+                          - AllErrors
+                        action:
+                          type: Abort
+              - step:
+                  type: Run
+                  name: tofu Apply
+                  identifier: tofu_apply_step
+                  spec:
+                    connectorRef: account.harnessImage
+                    image: ghcr.io/opentofu/opentofu:latest
+                    shell: Sh
+                    command: |
+                      set -e
+                      cd /harness/<+pipeline.variables.entrypoint>
+
+                      # Use platform-configs overrides if the repo was cloned, else use template defaults
+                      if [ -d "/harness/platform-configs/hsf-platform-bootstrap" ]; then
+                        export TF_VAR_configs_relative_path="../platform-configs/hsf-platform-bootstrap"
+                      fi
+
+                      # Compute state prefix based on entrypoint
+                      case "<+pipeline.variables.entrypoint>" in
+                        "harness-platform-bootstrap")
+                          STATE_PREFIX="harness/bootstrap"
+                          ;;
+                        "harness-organization")
+                          STATE_PREFIX="harness/<+pipeline.variables.organization_name>"
+                          ;;
+                        "harness-platform-setup")
+                          STATE_PREFIX="harness/account_config"
+                          ;;
+                        "harness-project")
+                          STATE_PREFIX="harness/<+pipeline.variables.organization_name>/<+pipeline.variables.project_name>"
+                          ;;
+                      esac
+
+                      tofu init \
+                        -backend-config="bucket=<+pipeline.variables.gcs_bucket>" \
+                        -backend-config="prefix=${STATE_PREFIX}"
+
+                      if [ "<+pipeline.variables.tofu_action>" = "destroy" ]; then
+                        tofu destroy -auto-approve
+                      else
+                        tofu apply -auto-approve
+                      fi
+                    envVariables:
+                      HARNESS_PLATFORM_API_KEY: <+secrets.getValue("account.harness_platform_api_key")>
+                      HARNESS_ACCOUNT_ID: <+account.identifier>
+                      GOOGLE_OAUTH_ACCESS_TOKEN: <+steps.gcp_oidc_token_apply.output.outputVariables.GCLOUD_ACCESS_TOKEN>
+                      TF_VAR_harness_platform_account: <+account.identifier>
+                      TF_VAR_organization_name: <+pipeline.variables.organization_name>
+                      TF_VAR_project_name: <+pipeline.variables.project_name>
+                  timeout: 60m
+                  failureStrategies:
+                    - onFailure:
+                        errors:
+                          - AllErrors
+                        action:
+                          type: Abort
+        when:
+          pipelineStatus: Success
+          condition: '<+pipeline.variables.tofu_action> != "plan"'
+        failureStrategies:
+          - onFailure:
+              errors:
+                - AllErrors
+              action:
+                type: Abort

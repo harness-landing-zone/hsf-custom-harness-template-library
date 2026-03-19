@@ -1,0 +1,11 @@
+# Local test overrides — never commit
+local-tests.tf
+*.auto.tfvars
+terraform.tfvars
+providers.tf
+
+# Terraform/OpenTofu working files
+.terraform/
+.terraform.lock.hcl
+terraform.tfstate
+terraform.tfstate.backup

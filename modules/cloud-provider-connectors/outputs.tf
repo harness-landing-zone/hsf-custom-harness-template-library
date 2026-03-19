@@ -1,14 +1,14 @@
 output "connector_id" {
   description = "Harness connector ID."
-  value       = harness_platform_connector_aws.aws.id
+  value       = var.connector_type == "gcp" ? harness_platform_connector_gcp.gcp[0].id : harness_platform_connector_aws.aws[0].id
 }
 
 output "connector_identifier" {
   description = "Harness connector identifier."
-  value       = harness_platform_connector_aws.aws.identifier
+  value       = var.connector_type == "gcp" ? harness_platform_connector_gcp.gcp[0].identifier : harness_platform_connector_aws.aws[0].identifier
 }
 
 output "connector_name" {
   description = "Harness connector display name."
-  value       = harness_platform_connector_aws.aws.name
+  value       = var.connector_type == "gcp" ? harness_platform_connector_gcp.gcp[0].name : harness_platform_connector_aws.aws[0].name
 }

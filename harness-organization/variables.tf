@@ -49,6 +49,12 @@ variable "configs_relative_path" {
 # Secrets
 ##############################################################################
 
+variable "pem_path" {
+  type        = string
+  description = "[Optional] Absolute path to the directory containing PEM files for file-type secrets. Defaults to <module_dir>/pem when null."
+  default     = null
+}
+
 variable "secret_values" {
   type        = map(string)
   sensitive   = true

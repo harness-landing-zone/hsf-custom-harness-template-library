@@ -1,0 +1,24 @@
+# local-tests.tf.example
+#
+# Copy this file to local-tests.tf and fill in your values for local testing.
+# local-tests.tf is git-ignored — never commit it.
+#
+# This file shows how to wire a GCP connector YAML for local runs.
+
+# Example: override the module to pass in a local GCP project ID
+# (Normally this comes from terraform.tfvars or the pipeline variable)
+
+# No Terraform resources are needed here for most local tests — just populate
+# terraform.tfvars with the values below and run:
+#
+#   tofu init -backend-config="bucket=<your-bucket>" -backend-config="prefix=harness/bootstrap"
+#   tofu plan
+#
+# terraform.tfvars example:
+# --------------------------
+# harness_platform_account = "your-account-id"
+# harness_platform_url     = "https://app.harness.io/gateway"
+# gcp_project_id           = "your-gcp-project-id"
+# tags = {
+#   environment = "local-test"
+# }

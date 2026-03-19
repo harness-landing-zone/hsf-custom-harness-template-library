@@ -1,4 +1,14 @@
-# AWS Connectors
+variable "connector_type" {
+  description = "Cloud provider type for the connector. Supported values: aws, gcp."
+  type        = string
+  default     = "aws"
+
+  validation {
+    condition     = contains(["aws", "gcp"], var.connector_type)
+    error_message = "connector_type must be one of: aws, gcp."
+  }
+}
+
 variable "connector_name" {
   description = "Name of the connector."
   type        = string
@@ -50,7 +60,8 @@ variable "force_delete" {
   default     = false
 }
 
-# AWS Connetror Authentication Inputs
+# ── AWS Authentication ────────────────────────────────────────────────────────
+
 variable "aws_connector_inherit_from_delegate" {
   description = "Authentication using harness delegate."
   type = object({
@@ -61,7 +72,7 @@ variable "aws_connector_inherit_from_delegate" {
 }
 
 variable "aws_connector_manual_authentication" {
-  description = "Authentication using harness delegate."
+  description = "Authentication using static AWS access/secret keys."
   type = object({
     access_key_ref     = string
     secret_key_ref     = string
@@ -129,6 +140,37 @@ variable "aws_connector_full_jitter_backoff_strategy" {
     base_delay       = optional(number, null)
     max_backoff_time = optional(number, null)
     retry_count      = optional(number, null)
+  })
+  default = null
+}
+
+# ── GCP Authentication ────────────────────────────────────────────────────────
+
+variable "gcp_connector_oidc_authentication" {
+  description = "Workload Identity Federation (OIDC) authentication for GCP connector."
+  type = object({
+    workload_pool_id      = string
+    provider_id           = string
+    gcp_project_id        = string
+    service_account_email = string
+    delegate_selectors    = optional(set(string), [])
+  })
+  default = null
+}
+
+variable "gcp_connector_manual_authentication" {
+  description = "Manual authentication using a GCP service account key secret."
+  type = object({
+    secret_key_ref     = string
+    delegate_selectors = optional(set(string), [])
+  })
+  default = null
+}
+
+variable "gcp_connector_inherit_from_delegate" {
+  description = "Authentication inherited from the Harness delegate running on GCP."
+  type = object({
+    delegate_selectors = set(string)
   })
   default = null
 }

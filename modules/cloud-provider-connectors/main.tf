@@ -1,4 +1,6 @@
 resource "harness_platform_connector_aws" "aws" {
+  count = var.connector_type == "aws" ? 1 : 0
+
   name = var.connector_name
   identifier = (
     var.connector_identifier != null && trimspace(var.connector_identifier) != ""
@@ -113,6 +115,70 @@ resource "harness_platform_connector_aws" "aws" {
         (var.aws_connector_fixed_delay_backoff_strategy != null ? 1 : 0)
       ) <= 1
       error_message = "At most one backoff strategy can be enabled."
+    }
+  }
+}
+
+resource "harness_platform_connector_gcp" "gcp" {
+  count = var.connector_type == "gcp" ? 1 : 0
+
+  name = var.connector_name
+  identifier = (
+    var.connector_identifier != null && trimspace(var.connector_identifier) != ""
+    ? var.connector_identifier
+    : replace(replace(lower(var.connector_name), " ", "_"), "-", "_")
+  )
+  description = (
+    var.connector_description != null && trimspace(var.connector_description) != ""
+    ? var.connector_description
+    : null
+  )
+  tags = toset(try(var.connector_tags, []))
+
+  # Optional scoping (account-level if both are null)
+  org_id     = var.org_id != null && trimspace(var.org_id) != "" ? var.org_id : null
+  project_id = var.project_id != null && trimspace(var.project_id) != "" ? var.project_id : null
+
+  # Auth mode: OIDC
+  dynamic "oidc_authentication" {
+    for_each = var.gcp_connector_oidc_authentication != null ? [var.gcp_connector_oidc_authentication] : []
+
+    content {
+      workload_pool_id      = oidc_authentication.value.workload_pool_id
+      provider_id           = oidc_authentication.value.provider_id
+      gcp_project_id        = oidc_authentication.value.gcp_project_id
+      service_account_email = oidc_authentication.value.service_account_email
+      delegate_selectors    = try(oidc_authentication.value.delegate_selectors, [])
+    }
+  }
+
+  # Auth mode: manual (service account key)
+  dynamic "manual" {
+    for_each = var.gcp_connector_manual_authentication != null ? [var.gcp_connector_manual_authentication] : []
+
+    content {
+      secret_key_ref     = manual.value.secret_key_ref
+      delegate_selectors = try(manual.value.delegate_selectors, [])
+    }
+  }
+
+  # Auth mode: inherit from delegate
+  dynamic "inherit_from_delegate" {
+    for_each = var.gcp_connector_inherit_from_delegate != null ? [var.gcp_connector_inherit_from_delegate] : []
+
+    content {
+      delegate_selectors = inherit_from_delegate.value.delegate_selectors
+    }
+  }
+
+  lifecycle {
+    precondition {
+      condition = (
+        (var.gcp_connector_oidc_authentication != null ? 1 : 0) +
+        (var.gcp_connector_manual_authentication != null ? 1 : 0) +
+        (var.gcp_connector_inherit_from_delegate != null ? 1 : 0)
+      ) == 1
+      error_message = "Exactly one GCP auth mode must be enabled: oidc_authentication, manual, or inherit_from_delegate."
     }
   }
 }

@@ -47,7 +47,7 @@ resource "harness_platform_roles" "role" {
   identifier = replace(replace(each.value.name, " ", "_"), "-", "_")
 
   name                 = each.value.name
-  org_id               = data.harness_platform_organization.selected.id
+  org_id               = resource.harness_platform_organization.selected.id
   allowed_scope_levels = ["organization"]
 
   # [Optional] (Set of String) List of the permission identifiers

@@ -56,7 +56,7 @@ variable "project_key" {
 }
 
 variable "configs_root" {
-  type = string
-  default = ""
+  type        = string
+  default     = ""
   description = "The Root of the Configuration folder"
 }

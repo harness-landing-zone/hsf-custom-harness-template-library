@@ -14,7 +14,6 @@ locals {
   # converted into a list of key:value entries
   common_tags_tuple = [for k, v in local.common_tags : "${k}:${v}"]
 
-# Make the name As unique ID.
   fmt_identifier = (
     var.organization_id == null
     ?

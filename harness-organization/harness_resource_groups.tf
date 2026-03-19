@@ -12,7 +12,7 @@ resource "harness_platform_resource_group" "resource_group" {
   name        = each.value.name
   description = lookup(each.value.cnf, "description", "Harness ResourceGroup managed by Solutions Factory")
   account_id  = var.harness_platform_account
-  org_id      = data.harness_platform_organization.selected.id
+  org_id      = resource.harness_platform_organization.selected.id
 
   tags = flatten([
     [for k, v in lookup(each.value.cnf, "tags", {}) : "${k}:${v}"],

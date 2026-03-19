@@ -1,0 +1,61 @@
+trigger:
+  name: On Push to Main
+  identifier: on_push_to_main
+  enabled: true
+  description: Runs tofu plan on every push to main — apply requires manual re-run
+  tags:
+    created_by: Terraform
+    harnessSolutionsFactory: "true"
+  orgIdentifier: platform_management
+  projectIdentifier: platform_management
+  pipelineIdentifier: tofu_deploy
+
+  source:
+    type: Webhook
+    spec:
+      type: Github
+      spec:
+        type: Push
+        spec:
+          connectorRef: org.platform_configs
+          repoName: hsf-custom-harness-template-library
+          autoAbortPreviousExecutions: true
+          payloadConditions:
+            - key: targetBranch
+              operator: Equals
+              value: main
+          headerConditions: []
+          actions: []
+  inputYaml: |
+    pipeline:
+      identifier: tofu_deploy
+      properties:
+        ci:
+          codebase:
+            connectorRef: org.platform_configs
+            build:
+              type: branch
+              spec:
+                branch: main
+      variables:
+        - name: entrypoint
+          type: String
+          value: harness-organization
+        - name: tofu_action
+          type: String
+          value: plan
+        - name: gcs_bucket
+          type: String
+          value: <+input>
+        - name: gcp_project
+          type: String
+          value: <+input>
+        - name: gcp_pool_id
+          type: String
+          value: <+input>
+        - name: gcp_provider_id
+          type: String
+          value: <+input>
+        - name: gcp_service_account_email
+          type: String
+          value: <+input>

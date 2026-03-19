@@ -86,7 +86,7 @@ resource "harness_platform_role_assignments" "usergroup_bindings" {
 
   identifier = each.value.identifier
 
-  org_id                    = data.harness_platform_organization.selected.id
+  org_id                    = resource.harness_platform_organization.selected.id
   resource_group_identifier = each.value.resource_group
   role_identifier           = each.value.role
   principal {

@@ -5,7 +5,7 @@ data "harness_platform_organization" "selected" {
 resource "harness_platform_project" "selected" {
   identifier  = local.fmt_identifier
   name        = var.project_name
-  org_id      = data.harness_platform_organization.selected.id
+  org_id      = var.organization_id
   description = var.project_description
 
   tags = local.common_tags_tuple

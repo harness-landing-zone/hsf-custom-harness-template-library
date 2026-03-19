@@ -1,20 +1,25 @@
+locals {
+  org_projects = local.merged_sources["projects"]
+}
 
 module "harness_project" {
   depends_on = [
     module.git_connector,
     module.aws_cloud_provider_connector,
+    module.gcp_cloud_provider_connector,
     harness_platform_secret_text.org_secrets,
     harness_platform_secret_file.org_secrets,
   ]
-  source     = "../harness-project"
+  source = "../harness-project"
   for_each = {
-    for p in local.merged_sources["projects"] :
+    for p in local.org_projects :
     coalesce(
       try(p.cnf.identifier, null),
       replace(replace(p.name, " ", "_"), "-", "_")
     ) => p
   }
-  organization_id = local.fmt_identifier
+
+  organization_id = resource.harness_platform_organization.selected.id
   default_project_template = try(coalesce(
     # If the config is defined in the projects/<project_name>/config.yaml
     try(each.value.cnf.default_project_template, null),

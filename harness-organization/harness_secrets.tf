@@ -47,6 +47,6 @@ resource "harness_platform_secret_file" "org_secrets" {
   file_path = lookup(
     each.value.cnf,
     "file_path",
-    "${path.module}/pem/${coalesce(try(each.value.cnf.identifier, null), each.value.identifier)}.pem"
+    "${coalesce(var.pem_path, "${path.module}/pem")}/${coalesce(try(each.value.cnf.identifier, null), each.value.identifier)}.pem"
   )
 }
