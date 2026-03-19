@@ -9,7 +9,7 @@ module "aws_cloud_provider_connector" {
     if lower(lookup(connector.cnf, "type", "")) == "aws"
   }
 
-  org_id = data.harness_platform_organization.selected.id
+  org_id = resource.harness_platform_organization.selected.id
 
   connector_name        = each.value.name
   connector_identifier  = each.value.identifier

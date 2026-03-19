@@ -17,7 +17,7 @@ resource "harness_platform_environment" "environments" {
   identifier = each.value.identifier
 
   name        = each.value.name
-  org_id      = data.harness_platform_organization.selected.id
+  org_id      = resource.harness_platform_organization.selected.id
   type        = lookup(each.value.cnf, "type", "PreProduction")
   description = lookup(each.value.cnf, "description", "Harness Environment managed by Solutions Factory")
   tags = flatten([

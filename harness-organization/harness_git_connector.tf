@@ -8,8 +8,13 @@ module "git_connector" {
     for connector in local.git_connectors : connector.identifier => connector
   }
 
+  depends_on = [
+    harness_platform_secret_text.org_secrets,
+    harness_platform_secret_file.org_secrets,
+  ]
+
   connector_type        = each.value.cnf.type
-  org_id                = data.harness_platform_organization.selected.id
+  org_id                = harness_platform_organization.selected.id
   connector_name        = each.value.cnf.name
   connector_identifier  = each.value.identifier
   connector_description = lookup(each.value.cnf, "description", "Harness Git connector managed by Solutions Factory")

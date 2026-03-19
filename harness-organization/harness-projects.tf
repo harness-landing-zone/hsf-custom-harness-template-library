@@ -1,6 +1,11 @@
 
 module "harness_project" {
-  depends_on = [data.harness_platform_organization.selected]
+  depends_on = [
+    module.git_connector,
+    module.aws_cloud_provider_connector,
+    harness_platform_secret_text.org_secrets,
+    harness_platform_secret_file.org_secrets,
+  ]
   source     = "../harness-project"
   for_each = {
     for p in local.merged_sources["projects"] :
