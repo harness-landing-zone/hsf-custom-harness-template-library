@@ -6,7 +6,6 @@ module "harness_project" {
   depends_on = [
     module.git_connector,
     module.aws_cloud_provider_connector,
-    module.gcp_cloud_provider_connector,
     harness_platform_secret_text.org_secrets,
     harness_platform_secret_file.org_secrets,
   ]

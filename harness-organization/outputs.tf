@@ -25,17 +25,13 @@ output "organization_name" {
   value = data.harness_platform_organization.selected
 }
 
-# output "project_identifiers" {
-#   value = keys(harness_platform_project.projects)
-# }
+output "platform_configs_dir" {
+  value = local.platform_configs_dir
+}
+ output "source_directory" {
+   value = local.source_directory
+ }
 
-# output "projects" {
-#   value = {
-#     for k, p in data.harness_platform_project.projects :
-#     k => {
-#       name       = coalesce(p.name, k)
-#       identifier = coalesce(p.identifier, k)
-#     }
-#   }
-# }
-
+output "org_directory" {
+  value = local.org_directory 
+}

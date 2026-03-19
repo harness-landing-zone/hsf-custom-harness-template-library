@@ -18,7 +18,7 @@ variable "tags" {
 variable "organization_name" {
   type        = string
   description = "[Required] New Organization Name"
-  default     = "Harness Management"
+  default     = "Platform Management"
 }
 
 variable "git_connector_credentials" {
