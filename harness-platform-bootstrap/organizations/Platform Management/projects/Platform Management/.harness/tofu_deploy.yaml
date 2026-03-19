@@ -213,7 +213,7 @@ pipeline:
                     includePipelineExecutionHistory: true
                     approvers:
                       userGroups:
-                        - <+input>
+                        - _project_all_users
                       minimumCount: 1
                       disallowPipelineExecutor: false
                     approverInputs: []
