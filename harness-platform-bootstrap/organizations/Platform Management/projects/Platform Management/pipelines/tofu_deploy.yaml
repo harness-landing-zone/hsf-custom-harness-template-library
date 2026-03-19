@@ -2,5 +2,5 @@ name: Tofu Deploy
 description: Validates, scans, and deploys Terraform code for the Harness Landing Zone template library
 git_connector_ref: org.platform_configs
 git_repo_name: hsf-custom-harness-template-library
-git_file_path: harness-platform-bootstrap/organizations/Harness Management/.harness/tofu_deploy.yaml
-git_branch: main
+git_file_path: harness-platform-bootstrap/organizations/Platform Management/projects/Platform Management/.harness/tofu_deploy.yaml
+git_branch: feature/updating-depentancies
