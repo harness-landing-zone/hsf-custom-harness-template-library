@@ -226,6 +226,7 @@ pipeline:
                     secretManagerRef: harnessSecretManager
                     configuration:
                       command: Apply
+                      secretManagerRef: account.harnessSecretManager
                       configFiles:
                         store:
                           type: Github
@@ -345,9 +346,9 @@ pipeline:
                           - AllErrors
                         action:
                           type: MarkAsFailure
-          failureStrategies:
-            - onFailure:
-                errors:
-                  - AllErrors
-                action:
-                  type: MarkAsFailure
+        failureStrategies:
+          - onFailure:
+              errors:
+                - AllErrors
+              action:
+                type: MarkAsFailure
