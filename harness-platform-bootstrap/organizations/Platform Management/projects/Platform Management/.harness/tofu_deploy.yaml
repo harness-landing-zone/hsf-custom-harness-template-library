@@ -4,31 +4,47 @@ pipeline:
   projectIdentifier: platform_management
   orgIdentifier: platform_management
   tags: {}
+  allowStageExecutions: true
   properties:
     ci:
       codebase:
-        connectorRef: <+input>
+        connectorRef: org.platform_configs
         repoName: hsf-custom-harness-template-library
         build: <+input>
   variables:
+    - name: TF_REPO
+      type: String
+      description: Git repo name containing Terraform config
+      required: true
+      value: <+input>.default(hsf-custom-harness-template-library)
+    - name: TF_BRANCH
+      type: String
+      description: Branch to fetch Terraform config from
+      required: true
+      value: <+input>.default(main)
     - name: entrypoint
       type: String
-      description: tofu entrypoint directory to run
+      description: Entrypoint folder to run Terraform against
       required: true
       value: <+input>.allowedValues(harness-platform-bootstrap,harness-organization,harness-project,harness-platform-setup)
-    - name: tofu_action
+    - name: TF_INFRA_NAME
       type: String
-      description: tofu action to execute
+      description: Short infra name used in provisioner ID (e.g. vpc, eks-cluster)
       required: true
-      value: <+input>.allowedValues(plan,apply,destroy)
+      value: <+input>
+    - name: TF_ENV
+      type: String
+      description: Target environment
+      required: true
+      value: <+input>.default(dev).allowedValues(dev,staging,prod)
     - name: gcs_bucket
       type: String
-      description: GCS bucket name for tofu remote state storage
+      description: GCS bucket name for remote state storage
       required: true
       value: <+input>
     - name: gcp_project
       type: String
-      description: GCP project ID (numeric or string) used for OIDC token exchange and GCS backend
+      description: GCP project ID used for OIDC authentication and GCS backend
       required: true
       value: <+input>
     - name: gcp_pool_id
@@ -46,32 +62,18 @@ pipeline:
       description: GCP service account email for OIDC token exchange
       required: true
       value: <+input>
-    - name: organization_name
+    - name: TF_VARS_FILE
       type: String
-      description: Organization name to manage — must match the folder name in platform-configs (leave empty for platform-setup)
+      description: Path to .tfvars file within the repo (e.g. terraform/envs/dev.tfvars). Follows convention entrypoint/envs/TF_ENV.tfvars by default.
       required: false
-      value: <+input>
-    - name: project_name
-      type: String
-      description: Project name — required only when entrypoint is harness-project (must match the folder name in platform-configs)
-      required: false
-      value: <+input>
-    - name: platform_configs_repo
-      type: String
-      description: Platform configs repo to clone for org/project overrides (leave empty to use template defaults only)
-      required: false
-      value: <+input>
+      value: <+input>.default(<+pipeline.variables.entrypoint>/envs/<+pipeline.variables.TF_ENV>.tfvars)
   stages:
     - stage:
-        name: tofu Plan
-        identifier: tofu_plan
-        description: Clone repos and run tofu plan
+        name: Terraform Validation
+        identifier: validate_stage
         type: CI
         spec:
           cloneCodebase: true
-          caching:
-            enabled: true
-            override: true
           platform:
             os: Linux
             arch: Amd64
@@ -81,268 +83,271 @@ pipeline:
           execution:
             steps:
               - step:
-                  type: GitClone
-                  name: Clone Platform Configs
-                  identifier: clone_platform_configs_plan
-                  spec:
-                    connectorRef: org.platform_configs
-                    repoName: <+pipeline.variables.platform_configs_repo>
-                    build:
-                      type: branch
-                      spec:
-                        branch: main
-                    cloneDirectory: /harness/platform-configs/hsf-platform-bootstrap
-                  timeout: 10m
-                  when:
-                    stageStatus: Success
-                    condition: '<+pipeline.variables.platform_configs_repo> != ""'
-                  failureStrategies:
-                    - onFailure:
-                        errors:
-                          - AllErrors
-                        action:
-                          type: Abort
-              - step:
-                  type: Plugin
-                  name: GCP OIDC Token
-                  identifier: gcp_oidc_token_plan
-                  spec:
-                    connectorRef: account.harnessImage
-                    image: plugins/gcp-oidc
-                    settings:
-                      project_id: <+pipeline.variables.gcp_project>
-                      pool_id: <+pipeline.variables.gcp_pool_id>
-                      provider_id: <+pipeline.variables.gcp_provider_id>
-                      service_account_email_id: <+pipeline.variables.gcp_service_account_email>
-                      duration: 3600
-                      create_application_credentials_file: false
-                  timeout: 5m
-                  failureStrategies:
-                    - onFailure:
-                        errors:
-                          - AllErrors
-                        action:
-                          type: Abort
-              - step:
                   type: Run
-                  name: tofu Init and Plan
-                  identifier: tofu_init_plan
+                  name: Terraform Version Check
+                  identifier: tf_version_check
                   spec:
-                    connectorRef: account.harnessImage
-                    image: ghcr.io/opentofu/opentofu:latest
                     shell: Sh
                     command: |
-                      set -e
-                      ls /harness
-                      cd /harness/<+pipeline.variables.entrypoint>
-
-                      # Use platform-configs overrides if the repo was cloned, else use template defaults
-                      if [ -d "/harness/platform-configs/hsf-platform-bootstrap" ]; then
-                        export TF_VAR_configs_relative_path="../platform-configs/hsf-platform-bootstrap"
-                      fi
-
-                      # Compute state prefix based on entrypoint
-                      case "<+pipeline.variables.entrypoint>" in
-                        "harness-platform-bootstrap")
-                          STATE_PREFIX="harness/bootstrap"
-                          ;;
-                        "harness-organization")
-                          STATE_PREFIX="harness/<+pipeline.variables.organization_name>"
-                          ;;
-                        "harness-platform-setup")
-                          STATE_PREFIX="harness/Account"
-                          ;;
-                        "harness-project")
-                          STATE_PREFIX="harness/<+pipeline.variables.organization_name>/<+pipeline.variables.project_name>"
-                          ;;
-                      esac
-
-                      tofu init \
-                        -backend-config="bucket=<+pipeline.variables.gcs_bucket>" \
-                        -backend-config="prefix=${STATE_PREFIX}"
-
-                      if [ "<+pipeline.variables.tofu_action>" = "destroy" ]; then
-                        tofu plan -destroy
-                      else
-                        tofu plan
-                      fi
-                    envVariables:
-                      HARNESS_PLATFORM_API_KEY: <+secrets.getValue("account.harness_platform_api_key")>
-                      HARNESS_ACCOUNT_ID: <+account.identifier>
-                      GOOGLE_OAUTH_ACCESS_TOKEN: <+steps.gcp_oidc_token_plan.output.outputVariables.GCLOUD_ACCESS_TOKEN>
-                      TF_VAR_harness_platform_account: <+account.identifier>
-                      TF_VAR_organization_name: <+pipeline.variables.organization_name>
-                      TF_VAR_project_name: <+pipeline.variables.project_name>
-                  timeout: 30m
+                      echo "=== Tool Versions ==="
+                      terraform version || { echo "ERROR: terraform not found on PATH"; exit 1; }
+                      git --version     || { echo "ERROR: git not found on PATH"; exit 1; }
+                      echo "=== Terraform Version Enforcement ==="
+                      TF_VERSION=$(terraform version -json | python3 -c "import sys,json; print(json.load(sys.stdin)['terraform_version'])")
+                      REQUIRED_MINOR="1.5"
+                      echo "Detected: $TF_VERSION — Required minimum: $REQUIRED_MINOR"
+                      # Uncomment to enforce minimum version:
+                      # python3 -c "
+                      # import sys
+                      # v = '$TF_VERSION'.split('.')
+                      # r = '$REQUIRED_MINOR'.split('.')
+                      # sys.exit(0 if (int(v[0]),int(v[1])) >= (int(r[0]),int(r[1])) else 1)
+                      # " || { echo "ERROR: Terraform version too old"; exit 1; }
+                      echo "Version check passed"
+                  timeout: 2m
                   failureStrategies:
                     - onFailure:
                         errors:
                           - AllErrors
                         action:
-                          type: Abort
-        failureStrategies:
-          - onFailure:
-              errors:
-                - AllErrors
-              action:
-                type: Abort
+                          type: MarkAsFailure
+              - stepGroup:
+                  name: Validation
+                  identifier: Validation
+                  steps:
+                    - parallel:
+                        - step:
+                            type: Run
+                            name: Terraform Format Check
+                            identifier: tf_fmt
+                            spec:
+                              shell: Sh
+                              command: |
+                                terraform fmt -check -recursive <+pipeline.variables.entrypoint>
+                            timeout: 5m
+                            failureStrategies:
+                              - onFailure:
+                                  errors:
+                                    - AllErrors
+                                  action:
+                                    type: MarkAsFailure
+                        - step:
+                            type: Checkov
+                            name: Checkov Scan
+                            identifier: Checkov_Scan
+                            spec:
+                              mode: orchestration
+                              config: default
+                              target:
+                                type: repository
+                                detection: auto
+                              advanced:
+                                log:
+                                  level: info
+                        - step:
+                            type: Run
+                            name: Terraform Init
+                            identifier: tf_init
+                            spec:
+                              shell: Sh
+                              command: |
+                                cd <+pipeline.variables.entrypoint>
+                                terraform init -backend=false
+                            timeout: 5m
+                            failureStrategies:
+                              - onFailure:
+                                  errors:
+                                    - AllErrors
+                                  action:
+                                    type: MarkAsFailure
+                    - step:
+                        type: Run
+                        name: Terraform Validate
+                        identifier: tf_validate
+                        spec:
+                          shell: Sh
+                          command: |-
+                            cd <+pipeline.variables.entrypoint>
+                            terraform validate
+                        timeout: 5m
+                        failureStrategies:
+                          - onFailure:
+                              errors:
+                                - AllErrors
+                              action:
+                                type: MarkAsFailure
+                            when:
+                              stageStatus: All
+                              condition: <+execution.steps.Validation.steps.tf_init.status> == "SUCCEEDED"
+                  failureStrategies:
+                    - onFailure:
+                        errors:
+                          - AllErrors
+                        action:
+                          type: MarkAsFailure
+          caching:
+            enabled: false
+            paths: []
+          buildIntelligence:
+            enabled: false
+        properties:
+          ci:
+            codebase:
+              connectorRef: org.platform_configs
+              repoName: <+pipeline.variables.TF_REPO>
+              build:
+                type: branch
+                spec:
+                  branch: <+pipeline.variables.TF_BRANCH>
+        description: ""
     - stage:
-        name: Approval
-        identifier: approval_gate
-        description: Manual approval required before tofu apply or destroy
-        type: Approval
+        name: Terraform Execution
+        identifier: plan_apply_stage
+        description: Plan → Approve → Apply
+        type: Custom
+        tags: {}
         spec:
           execution:
             steps:
               - step:
-                  name: Approve tofu Apply
-                  identifier: approve_tofu_apply
+                  type: Queue
+                  name: Concurrency Lock
+                  identifier: concurrency_lock
+                  spec:
+                    key: <+pipeline.variables.TF_INFRA_NAME>_<+pipeline.variables.TF_ENV>
+                    scope: Pipeline
+                  timeout: 10m
+              - step:
+                  name: Terraform Plan
+                  identifier: tf_plan
+                  type: TerraformPlan
+                  spec:
+                    provisionerIdentifier: <+pipeline.variables.TF_INFRA_NAME>_<+pipeline.variables.TF_ENV>
+                    secretManagerRef: harnessSecretManager
+                    configuration:
+                      command: Apply
+                      configFiles:
+                        store:
+                          type: Github
+                          spec:
+                            connectorRef: org.platform_configs
+                            repoName: <+pipeline.variables.TF_REPO>
+                            gitFetchType: Branch
+                            branch: <+pipeline.variables.TF_BRANCH>
+                            folderPath: <+pipeline.variables.entrypoint>
+                      varFiles:
+                        - varFile:
+                            type: Remote
+                            identifier: tf_vars_file
+                            spec:
+                              store:
+                                type: Github
+                                spec:
+                                  connectorRef: org.platform_configs
+                                  repoName: <+pipeline.variables.TF_REPO>
+                                  gitFetchType: Branch
+                                  branch: <+pipeline.variables.TF_BRANCH>
+                                  paths:
+                                    - <+pipeline.variables.TF_VARS_FILE>
+                      environmentVariables:
+                        - name: TF_VAR_environment
+                          value: <+pipeline.variables.TF_ENV>
+                          type: String
+                      backendConfig:
+                        type: Inline
+                        spec:
+                          content: |-
+                            bucket = "<+pipeline.variables.gcs_bucket>"
+                            prefix = "<+pipeline.variables.TF_INFRA_NAME>/<+pipeline.variables.TF_ENV>"
+                      skipRefreshCommand: false
+                      exportTerraformPlanJson: true
+                    providerCredential:
+                      type: Gcp
+                      spec:
+                        connectorRef: org.harness_gcp_oidc
+                        project: <+pipeline.variables.gcp_project>
+                  timeout: 15m
+                  failureStrategies:
+                    - onFailure:
+                        errors:
+                          - AllErrors
+                        action:
+                          type: MarkAsFailure
+              - step:
+                  name: Plan Review Approval
+                  identifier: plan_review_approval
                   type: HarnessApproval
-                  timeout: 1d
                   spec:
                     approvalMessage: |-
-                      Please review the tofu plan before proceeding.
+                      *Terraform Plan Review Required*
 
-                        Entrypoint        : <+pipeline.variables.entrypoint>
-                        Action            : <+pipeline.variables.tofu_action>
-                        Organization      : <+pipeline.variables.organization_name>
-                        Project           : <+pipeline.variables.project_name>
+                      Infra      : <+pipeline.variables.TF_INFRA_NAME>
+                      Env        : <+pipeline.variables.TF_ENV>
+                      Branch     : <+pipeline.variables.TF_BRANCH>
+                      Folder     : <+pipeline.variables.entrypoint>
+                      Vars File  : <+pipeline.variables.TF_VARS_FILE>
+                      GCS Bucket : <+pipeline.variables.gcs_bucket>
 
-                      Review the plan output in Stage 1 (tofu Plan) and approve only
-                      if the changes are expected and safe to apply.
+                      Review the plan output above before approving.
+                      Pipeline: <+pipeline.executionUrl>
                     includePipelineExecutionHistory: true
+                    isAutoRejectEnabled: false
                     approvers:
                       userGroups:
-                        - <+input>
+                        - _project_all_users
                       minimumCount: 1
                       disallowPipelineExecutor: false
-                    approverInputs: []
-        when:
-          pipelineStatus: Success
-          condition: '<+pipeline.variables.tofu_action> != "plan"'
-    - stage:
-        name: tofu Apply
-        identifier: tofu_apply
-        description: Clone repos and run tofu apply or destroy
-        type: CI
-        spec:
-          cloneCodebase: true
-          caching:
-            enabled: true
-            override: true
-          platform:
-            os: Linux
-            arch: Amd64
-          runtime:
-            type: Cloud
-            spec: {}
-          execution:
-            steps:
+                  timeout: 1d
               - step:
-                  type: GitClone
-                  name: Clone Platform Configs
-                  identifier: clone_platform_configs_apply
+                  name: Terraform Apply
+                  identifier: tf_apply
+                  type: TerraformApply
                   spec:
-                    connectorRef: org.platform_configs
-                    repoName: <+pipeline.variables.platform_configs_repo>
-                    build:
-                      type: branch
+                    provisionerIdentifier: <+pipeline.variables.TF_INFRA_NAME>_<+pipeline.variables.TF_ENV>
+                    configuration:
+                      type: InheritFromPlan
+                    providerCredential:
+                      type: Gcp
                       spec:
-                        branch: main
-                    cloneDirectory: /harness/platform-configs/hsf-platform-bootstrap
-                  timeout: 10m
-                  when:
-                    stageStatus: Success
-                    condition: '<+pipeline.variables.platform_configs_repo> != ""'
+                        connectorRef: org.harness_gcp_oidc
+                        project: <+pipeline.variables.gcp_project>
+                  timeout: 20m
                   failureStrategies:
                     - onFailure:
                         errors:
                           - AllErrors
                         action:
-                          type: Abort
+                          type: MarkAsFailure
               - step:
-                  type: Plugin
-                  name: GCP OIDC Token
-                  identifier: gcp_oidc_token_apply
+                  type: ShellScript
+                  name: Terraform Outputs
+                  identifier: tf_outputs
+                  when:
+                    stageStatus: Success
                   spec:
-                    connectorRef: account.harnessImage
-                    image: plugins/gcp-oidc
-                    settings:
-                      project_id: <+pipeline.variables.gcp_project>
-                      pool_id: <+pipeline.variables.gcp_pool_id>
-                      provider_id: <+pipeline.variables.gcp_provider_id>
-                      service_account_email_id: <+pipeline.variables.gcp_service_account_email>
-                      duration: 3600
-                      create_application_credentials_file: false
+                    shell: Bash
+                    executionTarget: {}
+                    source:
+                      type: Inline
+                      spec:
+                        script: |
+                          echo "=== Apply Complete ==="
+                          echo "Infra      : <+pipeline.variables.TF_INFRA_NAME>"
+                          echo "Env        : <+pipeline.variables.TF_ENV>"
+                          echo "GCS Bucket : <+pipeline.variables.gcs_bucket>"
+                          echo "Vars File  : <+pipeline.variables.TF_VARS_FILE>"
+                    environmentVariables: []
+                    outputVariables: []
                   timeout: 5m
                   failureStrategies:
                     - onFailure:
                         errors:
                           - AllErrors
                         action:
-                          type: Abort
-              - step:
-                  type: Run
-                  name: tofu Apply
-                  identifier: tofu_apply_step
-                  spec:
-                    connectorRef: account.harnessImage
-                    image: ghcr.io/opentofu/opentofu:latest
-                    shell: Sh
-                    command: |
-                      set -e
-                      cd /harness/<+pipeline.variables.entrypoint>
-
-                      # Use platform-configs overrides if the repo was cloned, else use template defaults
-                      if [ -d "/harness/platform-configs/hsf-platform-bootstrap" ]; then
-                        export TF_VAR_configs_relative_path="../platform-configs/hsf-platform-bootstrap"
-                      fi
-
-                      # Compute state prefix based on entrypoint
-                      case "<+pipeline.variables.entrypoint>" in
-                        "harness-platform-bootstrap")
-                          STATE_PREFIX="harness/bootstrap"
-                          ;;
-                        "harness-organization")
-                          STATE_PREFIX="harness/<+pipeline.variables.organization_name>"
-                          ;;
-                        "harness-platform-setup")
-                          STATE_PREFIX="harness/account_config"
-                          ;;
-                        "harness-project")
-                          STATE_PREFIX="harness/<+pipeline.variables.organization_name>/<+pipeline.variables.project_name>"
-                          ;;
-                      esac
-
-                      tofu init \
-                        -backend-config="bucket=<+pipeline.variables.gcs_bucket>" \
-                        -backend-config="prefix=${STATE_PREFIX}"
-
-                      if [ "<+pipeline.variables.tofu_action>" = "destroy" ]; then
-                        tofu destroy -auto-approve
-                      else
-                        tofu apply -auto-approve
-                      fi
-                    envVariables:
-                      HARNESS_PLATFORM_API_KEY: <+secrets.getValue("account.harness_platform_api_key")>
-                      HARNESS_ACCOUNT_ID: <+account.identifier>
-                      GOOGLE_OAUTH_ACCESS_TOKEN: <+steps.gcp_oidc_token_apply.output.outputVariables.GCLOUD_ACCESS_TOKEN>
-                      TF_VAR_harness_platform_account: <+account.identifier>
-                      TF_VAR_organization_name: <+pipeline.variables.organization_name>
-                      TF_VAR_project_name: <+pipeline.variables.project_name>
-                  timeout: 60m
-                  failureStrategies:
-                    - onFailure:
-                        errors:
-                          - AllErrors
-                        action:
-                          type: Abort
-        when:
-          pipelineStatus: Success
-          condition: '<+pipeline.variables.tofu_action> != "plan"'
-        failureStrategies:
-          - onFailure:
-              errors:
-                - AllErrors
-              action:
-                type: Abort
+                          type: MarkAsFailure
+          failureStrategies:
+            - onFailure:
+                errors:
+                  - AllErrors
+                action:
+                  type: MarkAsFailure

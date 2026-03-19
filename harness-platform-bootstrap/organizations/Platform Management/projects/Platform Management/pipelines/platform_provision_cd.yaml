@@ -1,0 +1,6 @@
+name: Platform Provision CD
+description: CD pipeline using native Harness Terraform steps with dynamic var files from Git
+git_connector_ref: org.platform_configs
+git_repo_name: hsf-custom-harness-template-library
+git_file_path: harness-platform-bootstrap/organizations/Platform Management/projects/Platform Management/.harness/platform_provision_cd.yaml
+git_branch: main
