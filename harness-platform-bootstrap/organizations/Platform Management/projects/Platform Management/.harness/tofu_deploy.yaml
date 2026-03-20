@@ -11,11 +11,6 @@ pipeline:
         repoName: hsf-custom-harness-template-library
         build: <+input>
   variables:
-    - name: entrypoint
-      type: String
-      description: tofu entrypoint directory to run
-      required: true
-      value: <+input>.allowedValues(harness-platform-bootstrap,harness-organization,harness-project,harness-platform-setup)
     - name: tofu_action
       type: String
       description: tofu action to execute
@@ -48,19 +43,39 @@ pipeline:
       value: <+input>
     - name: organization_name
       type: String
-      description: Organization name to manage — must match the folder name in platform-configs (leave empty for platform-setup)
+      description: Organization name to manage. Used for org deployments and for existing-org lookup in project-only deployments.
       required: false
       value: <+input>
     - name: project_name
       type: String
-      description: Project name — required only when entrypoint is harness-project (must match the folder name in platform-configs)
+      description: Project name to create when create_project is true.
       required: false
       value: <+input>
-    - name: platform_configs_repo
+    - name: create_organization
+      type: String
+      description: Set true to deploy the organization module and any discovered projects in that org config.
+      required: false
+      value: <+input>.default(false).allowedValues(true,false)
+    - name: create_project
+      type: String
+      description: Set true to deploy only the project module against an existing organization.
+      required: false
+      value: <+input>.default(false).allowedValues(true,false)
+    - name: create_account
+      type: String
+      description: Set true to deploy account-level resources through the harness-platform-setup module from the root deployment entrypoint.
+      required: false
+      value: <+input>.default(false).allowedValues(true,false)
+    - name: platform_configs_repo_name
       type: String
       description: Platform configs repo to clone for org/project overrides (leave empty to use template defaults only)
       required: false
       value: <+input>
+    - name: platform_configs_branch
+      type: String
+      description: Branch for the platform-configs repo when using the git-driven approach
+      required: false
+      value: <+input>.default(main)
   stages:
     - stage:
         name: tofu Plan
@@ -86,16 +101,16 @@ pipeline:
                   identifier: clone_platform_configs_plan
                   spec:
                     connectorRef: org.platform_configs
-                    repoName: <+pipeline.variables.platform_configs_repo>
+                    repoName: <+pipeline.variables.platform_configs_repo_name>
                     build:
                       type: branch
                       spec:
-                        branch: main
-                    cloneDirectory: /harness/platform-configs/hsf-platform-bootstrap
+                        branch: <+pipeline.variables.platform_configs_branch>
+                    cloneDirectory: /harness/platform-configs/<+pipeline.variables.platform_configs_repo_name>
                   timeout: 10m
                   when:
                     stageStatus: Success
-                    condition: '<+pipeline.variables.platform_configs_repo> != ""'
+                    condition: '<+pipeline.variables.platform_configs_repo_name> != ""'
                   failureStrategies:
                     - onFailure:
                         errors:
@@ -133,29 +148,36 @@ pipeline:
                     shell: Sh
                     command: |
                       set -e
-                      ls /harness
-                      cd /harness/<+pipeline.variables.entrypoint>
+                      cd /harness/harness-platfom-deployment
 
                       # Use platform-configs overrides if the repo was cloned, else use template defaults
-                      if [ -d "/harness/platform-configs/hsf-platform-bootstrap" ]; then
-                        export TF_VAR_configs_relative_path="../platform-configs/hsf-platform-bootstrap"
+                      if [ -d "/harness/platform-configs/<+pipeline.variables.platform_configs_repo_name>" ]; then
+                        export TF_VAR_configs_relative_path="../platform-configs/<+pipeline.variables.platform_configs_repo_name>"
                       fi
 
-                      # Compute state prefix based on entrypoint
-                      case "<+pipeline.variables.entrypoint>" in
-                        "harness-platform-bootstrap")
-                          STATE_PREFIX="harness/bootstrap"
-                          ;;
-                        "harness-organization")
-                          STATE_PREFIX="harness/<+pipeline.variables.organization_name>"
-                          ;;
-                        "harness-platform-setup")
-                          STATE_PREFIX="harness/Account"
-                          ;;
-                        "harness-project")
-                          STATE_PREFIX="harness/<+pipeline.variables.organization_name>/<+pipeline.variables.project_name>"
-                          ;;
-                      esac
+                      ORG_STATE_KEY=$(printf '%s' "<+pipeline.variables.organization_name>" | tr ' -' '_')
+                      PROJECT_TARGET="<+pipeline.variables.project_name>"
+                      PROJECT_STATE_KEY=$(printf '%s' "${PROJECT_TARGET}" | tr ' -' '_')
+
+                      SELECTED_COUNT=0
+                      for FLAG in "<+pipeline.variables.create_account>" "<+pipeline.variables.create_organization>" "<+pipeline.variables.create_project>"; do
+                        if [ "${FLAG}" = "true" ]; then
+                          SELECTED_COUNT=$((SELECTED_COUNT + 1))
+                        fi
+                      done
+
+                      if [ "${SELECTED_COUNT}" -ne 1 ]; then
+                        echo "Exactly one deployment mode must be selected: create_account, create_organization, or create_project."
+                        exit 1
+                      fi
+
+                      if [ "<+pipeline.variables.create_account>" = "true" ]; then
+                        STATE_PREFIX="harness/account/platform-setup"
+                      elif [ "<+pipeline.variables.create_project>" = "true" ]; then
+                        STATE_PREFIX="harness/projects/${ORG_STATE_KEY}/${PROJECT_STATE_KEY}"
+                      else
+                        STATE_PREFIX="harness/orgs/${ORG_STATE_KEY}"
+                      fi
 
                       tofu init \
                         -backend-config="bucket=<+pipeline.variables.gcs_bucket>" \
@@ -173,6 +195,9 @@ pipeline:
                       TF_VAR_harness_platform_account: <+account.identifier>
                       TF_VAR_organization_name: <+pipeline.variables.organization_name>
                       TF_VAR_project_name: <+pipeline.variables.project_name>
+                      TF_VAR_create_account: <+pipeline.variables.create_account>
+                      TF_VAR_create_organization: <+pipeline.variables.create_organization>
+                      TF_VAR_create_project: <+pipeline.variables.create_project>
                   timeout: 30m
                   failureStrategies:
                     - onFailure:
@@ -203,10 +228,12 @@ pipeline:
                     approvalMessage: |-
                       Please review the tofu plan before proceeding.
 
-                        Entrypoint        : <+pipeline.variables.entrypoint>
                         Action            : <+pipeline.variables.tofu_action>
                         Organization      : <+pipeline.variables.organization_name>
                         Project           : <+pipeline.variables.project_name>
+                        Create Account    : <+pipeline.variables.create_account>
+                        Create Org        : <+pipeline.variables.create_organization>
+                        Create Project    : <+pipeline.variables.create_project>
 
                       Review the plan output in Stage 1 (tofu Plan) and approve only
                       if the changes are expected and safe to apply.
@@ -244,16 +271,16 @@ pipeline:
                   identifier: clone_platform_configs_apply
                   spec:
                     connectorRef: org.platform_configs
-                    repoName: <+pipeline.variables.platform_configs_repo>
+                    repoName: <+pipeline.variables.platform_configs_repo_name>
                     build:
                       type: branch
                       spec:
-                        branch: main
-                    cloneDirectory: /harness/platform-configs/hsf-platform-bootstrap
+                        branch: <+pipeline.variables.platform_configs_branch>
+                    cloneDirectory: /harness/platform-configs/<+pipeline.variables.platform_configs_repo_name>
                   timeout: 10m
                   when:
                     stageStatus: Success
-                    condition: '<+pipeline.variables.platform_configs_repo> != ""'
+                    condition: '<+pipeline.variables.platform_configs_repo_name> != ""'
                   failureStrategies:
                     - onFailure:
                         errors:
@@ -291,28 +318,36 @@ pipeline:
                     shell: Sh
                     command: |
                       set -e
-                      cd /harness/<+pipeline.variables.entrypoint>
+                      cd /harness/harness-platfom-deployment
 
                       # Use platform-configs overrides if the repo was cloned, else use template defaults
-                      if [ -d "/harness/platform-configs/hsf-platform-bootstrap" ]; then
-                        export TF_VAR_configs_relative_path="../platform-configs/hsf-platform-bootstrap"
+                      if [ -d "/harness/platform-configs/<+pipeline.variables.platform_configs_repo_name>" ]; then
+                        export TF_VAR_configs_relative_path="../platform-configs/<+pipeline.variables.platform_configs_repo_name>"
                       fi
 
-                      # Compute state prefix based on entrypoint
-                      case "<+pipeline.variables.entrypoint>" in
-                        "harness-platform-bootstrap")
-                          STATE_PREFIX="harness/bootstrap"
-                          ;;
-                        "harness-organization")
-                          STATE_PREFIX="harness/<+pipeline.variables.organization_name>"
-                          ;;
-                        "harness-platform-setup")
-                          STATE_PREFIX="harness/account_config"
-                          ;;
-                        "harness-project")
-                          STATE_PREFIX="harness/<+pipeline.variables.organization_name>/<+pipeline.variables.project_name>"
-                          ;;
-                      esac
+                      ORG_STATE_KEY=$(printf '%s' "<+pipeline.variables.organization_name>" | tr ' -' '_')
+                      PROJECT_TARGET="<+pipeline.variables.project_name>"
+                      PROJECT_STATE_KEY=$(printf '%s' "${PROJECT_TARGET}" | tr ' -' '_')
+
+                      SELECTED_COUNT=0
+                      for FLAG in "<+pipeline.variables.create_account>" "<+pipeline.variables.create_organization>" "<+pipeline.variables.create_project>"; do
+                        if [ "${FLAG}" = "true" ]; then
+                          SELECTED_COUNT=$((SELECTED_COUNT + 1))
+                        fi
+                      done
+
+                      if [ "${SELECTED_COUNT}" -ne 1 ]; then
+                        echo "Exactly one deployment mode must be selected: create_account, create_organization, or create_project."
+                        exit 1
+                      fi
+
+                      if [ "<+pipeline.variables.create_account>" = "true" ]; then
+                        STATE_PREFIX="harness/account/platform-setup"
+                      elif [ "<+pipeline.variables.create_project>" = "true" ]; then
+                        STATE_PREFIX="harness/projects/${ORG_STATE_KEY}/${PROJECT_STATE_KEY}"
+                      else
+                        STATE_PREFIX="harness/orgs/${ORG_STATE_KEY}"
+                      fi
 
                       tofu init \
                         -backend-config="bucket=<+pipeline.variables.gcs_bucket>" \
@@ -330,6 +365,9 @@ pipeline:
                       TF_VAR_harness_platform_account: <+account.identifier>
                       TF_VAR_organization_name: <+pipeline.variables.organization_name>
                       TF_VAR_project_name: <+pipeline.variables.project_name>
+                      TF_VAR_create_account: <+pipeline.variables.create_account>
+                      TF_VAR_create_organization: <+pipeline.variables.create_organization>
+                      TF_VAR_create_project: <+pipeline.variables.create_project>
                   timeout: 60m
                   failureStrategies:
                     - onFailure:

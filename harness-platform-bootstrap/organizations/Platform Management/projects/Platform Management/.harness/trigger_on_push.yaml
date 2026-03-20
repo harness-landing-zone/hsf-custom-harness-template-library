@@ -38,9 +38,6 @@ trigger:
               spec:
                 branch: main
       variables:
-        - name: entrypoint
-          type: String
-          value: harness-organization
         - name: tofu_action
           type: String
           value: plan
@@ -59,3 +56,24 @@ trigger:
         - name: gcp_service_account_email
           type: String
           value: <+input>
+        - name: organization_name
+          type: String
+          value: <+input>
+        - name: project_name
+          type: String
+          value: ""
+        - name: create_organization
+          type: String
+          value: "true"
+        - name: create_project
+          type: String
+          value: "false"
+        - name: create_account
+          type: String
+          value: "false"
+        - name: platform_configs_repo
+          type: String
+          value: hsf-platform-bootstrap
+        - name: platform_configs_branch
+          type: String
+          value: main
