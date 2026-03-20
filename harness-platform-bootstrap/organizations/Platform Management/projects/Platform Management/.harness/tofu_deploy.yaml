@@ -110,7 +110,7 @@ pipeline:
                   timeout: 10m
                   when:
                     stageStatus: Success
-                    condition: '<+pipeline.variables.platform_configs_repo_name> != ""'
+                    condition: '<+pipeline.variables.platform_configs_repo_name> != null'
                   failureStrategies:
                     - onFailure:
                         errors:
@@ -140,7 +140,7 @@ pipeline:
                           type: Abort
               - step:
                   type: Run
-                  name: tofu Init and Plan
+                  name: tofu Init
                   identifier: tofu_init_plan
                   spec:
                     connectorRef: account.harnessImage
@@ -150,14 +150,8 @@ pipeline:
                       set -e
                       cd /harness/harness-platfom-deployment
 
-                      # Use platform-configs overrides if the repo was cloned, else use template defaults
-                      if [ -d "/harness/platform-configs/<+pipeline.variables.platform_configs_repo_name>" ]; then
-                        export TF_VAR_configs_relative_path="../platform-configs/<+pipeline.variables.platform_configs_repo_name>"
-                      fi
-
                       ORG_STATE_KEY=$(printf '%s' "<+pipeline.variables.organization_name>" | tr ' -' '_')
-                      PROJECT_TARGET="<+pipeline.variables.project_name>"
-                      PROJECT_STATE_KEY=$(printf '%s' "${PROJECT_TARGET}" | tr ' -' '_')
+                      PROJECT_STATE_KEY=$(printf '%s' "<+pipeline.variables.project_name>" | tr ' -' '_')
 
                       SELECTED_COUNT=0
                       for FLAG in "<+pipeline.variables.create_account>" "<+pipeline.variables.create_organization>" "<+pipeline.variables.create_project>"; do
@@ -182,6 +176,36 @@ pipeline:
                       tofu init \
                         -backend-config="bucket=<+pipeline.variables.gcs_bucket>" \
                         -backend-config="prefix=${STATE_PREFIX}"
+                    envVariables:
+                      GOOGLE_OAUTH_ACCESS_TOKEN: <+steps.gcp_oidc_token_plan.output.outputVariables.GCLOUD_ACCESS_TOKEN>
+                      TF_VAR_harness_platform_account: <+account.identifier>
+                      TF_VAR_organization_name: <+pipeline.variables.organization_name>
+                      TF_VAR_project_name: <+pipeline.variables.project_name>
+                      TF_VAR_create_account: <+pipeline.variables.create_account>
+                      TF_VAR_create_organization: <+pipeline.variables.create_organization>
+                      TF_VAR_create_project: <+pipeline.variables.create_project>
+                  timeout: 15m
+                  failureStrategies:
+                    - onFailure:
+                        errors:
+                          - AllErrors
+                        action:
+                          type: Abort
+              - step:
+                  type: Run
+                  name: tofu Plan
+                  identifier: tofu_plan_step
+                  spec:
+                    connectorRef: account.harnessImage
+                    image: ghcr.io/opentofu/opentofu:latest
+                    shell: Sh
+                    command: |
+                      set -e
+                      cd /harness/harness-platfom-deployment
+
+                      if [ -d "/harness/platform-configs/<+pipeline.variables.platform_configs_repo_name>" ]; then
+                        export TF_VAR_configs_relative_path="../platform-configs/<+pipeline.variables.platform_configs_repo_name>"
+                      fi
 
                       if [ "<+pipeline.variables.tofu_action>" = "destroy" ]; then
                         tofu plan -destroy
@@ -282,7 +306,7 @@ pipeline:
                   timeout: 10m
                   when:
                     stageStatus: Success
-                    condition: '<+pipeline.variables.platform_configs_repo_name> != ""'
+                    condition: '<+pipeline.variables.platform_configs_repo_name> != null'
                   failureStrategies:
                     - onFailure:
                         errors:
@@ -312,8 +336,8 @@ pipeline:
                           type: Abort
               - step:
                   type: Run
-                  name: tofu Apply
-                  identifier: tofu_apply_step
+                  name: tofu Init
+                  identifier: tofu_init_apply
                   spec:
                     connectorRef: account.harnessImage
                     image: ghcr.io/opentofu/opentofu:latest
@@ -322,26 +346,8 @@ pipeline:
                       set -e
                       cd /harness/harness-platfom-deployment
 
-                      # Use platform-configs overrides if the repo was cloned, else use template defaults
-                      if [ -d "/harness/platform-configs/<+pipeline.variables.platform_configs_repo_name>" ]; then
-                        export TF_VAR_configs_relative_path="../platform-configs/<+pipeline.variables.platform_configs_repo_name>"
-                      fi
-
                       ORG_STATE_KEY=$(printf '%s' "<+pipeline.variables.organization_name>" | tr ' -' '_')
-                      PROJECT_TARGET="<+pipeline.variables.project_name>"
-                      PROJECT_STATE_KEY=$(printf '%s' "${PROJECT_TARGET}" | tr ' -' '_')
-
-                      SELECTED_COUNT=0
-                      for FLAG in "<+pipeline.variables.create_account>" "<+pipeline.variables.create_organization>" "<+pipeline.variables.create_project>"; do
-                        if [ "${FLAG}" = "true" ]; then
-                          SELECTED_COUNT=$((SELECTED_COUNT + 1))
-                        fi
-                      done
-
-                      if [ "${SELECTED_COUNT}" -ne 1 ]; then
-                        echo "Exactly one deployment mode must be selected: create_account, create_organization, or create_project."
-                        exit 1
-                      fi
+                      PROJECT_STATE_KEY=$(printf '%s' "<+pipeline.variables.project_name>" | tr ' -' '_')
 
                       if [ "<+pipeline.variables.create_account>" = "true" ]; then
                         STATE_PREFIX="harness/account/platform-setup"
@@ -354,6 +360,36 @@ pipeline:
                       tofu init \
                         -backend-config="bucket=<+pipeline.variables.gcs_bucket>" \
                         -backend-config="prefix=${STATE_PREFIX}"
+                    envVariables:
+                      GOOGLE_OAUTH_ACCESS_TOKEN: <+steps.gcp_oidc_token_apply.output.outputVariables.GCLOUD_ACCESS_TOKEN>
+                      TF_VAR_harness_platform_account: <+account.identifier>
+                      TF_VAR_organization_name: <+pipeline.variables.organization_name>
+                      TF_VAR_project_name: <+pipeline.variables.project_name>
+                      TF_VAR_create_account: <+pipeline.variables.create_account>
+                      TF_VAR_create_organization: <+pipeline.variables.create_organization>
+                      TF_VAR_create_project: <+pipeline.variables.create_project>
+                  timeout: 15m
+                  failureStrategies:
+                    - onFailure:
+                        errors:
+                          - AllErrors
+                        action:
+                          type: Abort
+              - step:
+                  type: Run
+                  name: tofu Apply
+                  identifier: tofu_apply_step
+                  spec:
+                    connectorRef: account.harnessImage
+                    image: ghcr.io/opentofu/opentofu:latest
+                    shell: Sh
+                    command: |
+                      set -e
+                      cd /harness/harness-platfom-deployment
+
+                      if [ -d "/harness/platform-configs/<+pipeline.variables.platform_configs_repo_name>" ]; then
+                        export TF_VAR_configs_relative_path="../platform-configs/<+pipeline.variables.platform_configs_repo_name>"
+                      fi
 
                       if [ "<+pipeline.variables.tofu_action>" = "destroy" ]; then
                         tofu destroy -auto-approve
