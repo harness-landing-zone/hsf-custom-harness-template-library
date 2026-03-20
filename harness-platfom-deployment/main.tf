@@ -14,7 +14,7 @@ module "harness_platform_setup" {
 
 data "harness_platform_organization" "existing" {
   count      = var.create_project && !var.create_organization ? 1 : 0
-  identifier = local.org_identifier
+  name       = var.organization_name
 }
 
 module "harness_organization" {
@@ -34,8 +34,7 @@ module "harness_project" {
   count      = var.create_project ? 1 : 0
   source     = "../harness-project"
 
-  organization_id          = try(data.harness_platform_organization.existing[0].identifier, local.org_identifier)
-  project_id               = var.project_id
+  organization_id          = try(data.harness_platform_organization.existing[0].id, local.org_identifier)
   project_name             = var.project_name
   project_key              = var.project_name
   configs_root             = var.configs_relative_path

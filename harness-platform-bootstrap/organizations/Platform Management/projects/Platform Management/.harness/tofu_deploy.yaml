@@ -174,7 +174,7 @@ pipeline:
                       if [ "<+pipeline.variables.create_account>" = "true" ]; then
                         STATE_PREFIX="harness/account/platform-setup"
                       elif [ "<+pipeline.variables.create_project>" = "true" ]; then
-                        STATE_PREFIX="harness/projects/${ORG_STATE_KEY}/${PROJECT_STATE_KEY}"
+                        STATE_PREFIX="harness/orgs/${ORG_STATE_KEY}/projects/${PROJECT_STATE_KEY}"
                       else
                         STATE_PREFIX="harness/orgs/${ORG_STATE_KEY}"
                       fi
@@ -241,6 +241,8 @@ pipeline:
                     approvers:
                       userGroups:
                         - _project_all_users
+                        - account._account_all_users
+                        - org._organization_all_users
                       minimumCount: 1
                       disallowPipelineExecutor: false
                     approverInputs: []
@@ -344,7 +346,7 @@ pipeline:
                       if [ "<+pipeline.variables.create_account>" = "true" ]; then
                         STATE_PREFIX="harness/account/platform-setup"
                       elif [ "<+pipeline.variables.create_project>" = "true" ]; then
-                        STATE_PREFIX="harness/projects/${ORG_STATE_KEY}/${PROJECT_STATE_KEY}"
+                        STATE_PREFIX="harness/orgs/${ORG_STATE_KEY}/projects/${PROJECT_STATE_KEY}"
                       else
                         STATE_PREFIX="harness/orgs/${ORG_STATE_KEY}"
                       fi
