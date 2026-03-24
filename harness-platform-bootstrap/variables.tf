@@ -67,3 +67,9 @@ variable "scope_level" {
     error_message = "scope_level must be account, organization, or project."
   }
 }
+
+variable "prefix" {
+  type = string
+  default = ""
+  description = "Resource prefix to ensure uniqueness. Should be left blank when deploying a single instance of the module, but can be set to differentiate resources when deploying multiple instances (e.g. across environments)."
+}

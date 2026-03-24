@@ -2,9 +2,9 @@
 # Scoped at account level so it can manage orgs and projects across the platform.
 
 resource "harness_platform_service_account" "harness_bootstrap" {
-  identifier  = "harness_bootstrap"
-  name        = "Harness Bootstrap"
-  email       = "harness-bootstrap@service.harness.io"
+  identifier  = "${var.prefix}harness_bootstrap"
+  name        = "${var.prefix} Harness Bootstrap"
+  email       = "${var.prefix}harness-bootstrap@service.harness.io"
   account_id  = var.harness_platform_account
   description = "Service account for the Harness Bootstrap pipeline — manages orgs, projects, and resources via the tofu_deploy pipeline"
 }
@@ -12,8 +12,8 @@ resource "harness_platform_service_account" "harness_bootstrap" {
 resource "harness_platform_apikey" "harness_bootstrap" {
   depends_on = [harness_platform_service_account.harness_bootstrap]
 
-  identifier  = "harness_bootstrap_apikey"
-  name        = "Harness Bootstrap API Key"
+  identifier  = "${var.prefix}harness_bootstrap_apikey"
+  name        = "${var.prefix} Harness Bootstrap API Key"
   parent_id   = harness_platform_service_account.harness_bootstrap.identifier
   apikey_type = "SERVICE_ACCOUNT"
   account_id  = var.harness_platform_account
@@ -26,8 +26,8 @@ resource "harness_platform_apikey" "harness_bootstrap" {
 resource "harness_platform_token" "harness_bootstrap" {
   depends_on = [harness_platform_apikey.harness_bootstrap]
 
-  identifier  = "harness_bootstrap_token"
-  name        = "Harness Bootstrap Token"
+  identifier  = "${var.prefix}harness_bootstrap_token"
+  name        = "${var.prefix} Harness Bootstrap Token"
   parent_id   = harness_platform_service_account.harness_bootstrap.identifier
   apikey_type = "SERVICE_ACCOUNT"
   apikey_id   = harness_platform_apikey.harness_bootstrap.identifier
@@ -39,10 +39,10 @@ resource "harness_platform_token" "harness_bootstrap" {
 resource "harness_platform_secret_text" "harness_bootstrap" {
   depends_on = [harness_platform_token.harness_bootstrap, module.projects]
 
-  identifier                = "harness_bootstrap_api_key"
-  name                      = "Harness Bootstrap API Key"
+  identifier                = "${var.prefix}harness_bootstrap_api_key"
+  name                      = "${var.prefix} Harness Bootstrap API Key"
   description               = "Auto-generated token for the Harness Bootstrap service account"
-  org_id                    = "harness_platform_accelerator"
+  org_id                    = module.platform_management.organization_id
   project_id                = "platform_management"
   secret_manager_identifier = "harnessSecretManager"
 
