@@ -99,7 +99,7 @@ pipeline:
                   timeout: 10m
                   when:
                     stageStatus: Success
-                    condition: '<+pipeline.variables.platform_configs_repo_name> != null && <+pipeline.variables.platform_configs_repo_name> != ""'
+                    condition: <+pipeline.variables.platform_configs_repo_name> != null && <+pipeline.variables.platform_configs_repo_name> != ""
                   failureStrategies:
                     - onFailure:
                         errors:
@@ -163,7 +163,7 @@ pipeline:
                   timeout: 5m
                   when:
                     stageStatus: Success
-                    condition: '<+pipeline.variables.platform_configs_repo_name> != null'
+                    condition: <+pipeline.variables.platform_configs_repo_name> != null
                   failureStrategies:
                     - onFailure:
                         errors:
@@ -266,7 +266,7 @@ pipeline:
                         tofu plan -out=tfplan
                       fi
                     envVariables:
-                      HARNESS_PLATFORM_API_KEY: <+secrets.getValue("harness_testbootstrap_api_key")>
+                      HARNESS_PLATFORM_API_KEY: <+secrets.getValue("testharness_bootstrap_api_key")>
                       HARNESS_ACCOUNT_ID: <+account.identifier>
                       GOOGLE_OAUTH_ACCESS_TOKEN: <+steps.gcp_oidc_token_plan.output.outputVariables.GCLOUD_ACCESS_TOKEN>
                       TF_VAR_harness_platform_account: <+account.identifier>
@@ -376,7 +376,7 @@ pipeline:
                     approverInputs: []
         when:
           pipelineStatus: Success
-          condition: '<+pipeline.variables.tofu_action> != "plan"'
+          condition: <+pipeline.variables.tofu_action> != "plan"
     - stage:
         name: tofu Apply
         identifier: tofu_apply
@@ -410,7 +410,7 @@ pipeline:
                   timeout: 10m
                   when:
                     stageStatus: Success
-                    condition: '<+pipeline.variables.platform_configs_repo_name> != null && <+pipeline.variables.platform_configs_repo_name> != ""'
+                    condition: <+pipeline.variables.platform_configs_repo_name> != null && <+pipeline.variables.platform_configs_repo_name> != ""
                   failureStrategies:
                     - onFailure:
                         errors:
@@ -545,7 +545,7 @@ pipeline:
                       # Apply the exact plan that was reviewed
                       tofu apply -auto-approve tfplan
                     envVariables:
-                      HARNESS_PLATFORM_API_KEY: <+secrets.getValue("harness_testbootstrap_api_key")>
+                      HARNESS_PLATFORM_API_KEY: <+secrets.getValue("testharness_bootstrap_api_key")>
                       HARNESS_ACCOUNT_ID: <+account.identifier>
                       GOOGLE_OAUTH_ACCESS_TOKEN: <+steps.gcp_oidc_token_apply.output.outputVariables.GCLOUD_ACCESS_TOKEN>
                       TF_VAR_harness_platform_account: <+account.identifier>
@@ -561,7 +561,7 @@ pipeline:
                           type: Abort
         when:
           pipelineStatus: Success
-          condition: '<+pipeline.variables.tofu_action> != "plan"'
+          condition: <+pipeline.variables.tofu_action> != "plan"
         failureStrategies:
           - onFailure:
               errors:
