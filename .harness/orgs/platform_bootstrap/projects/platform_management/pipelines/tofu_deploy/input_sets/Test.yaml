@@ -1,0 +1,48 @@
+inputSet:
+  pipeline:
+    identifier: tofu_deploy
+    properties:
+      ci:
+        codebase:
+          build:
+            spec:
+              branch: main
+            type: branch
+    variables:
+      - name: tofu_action
+        type: String
+        value: ""
+      - name: gcs_bucket
+        type: String
+        value: harness-backend-mk
+      - name: gcp_project
+        type: String
+        value: "767882366375"
+      - name: gcp_pool_id
+        type: String
+        value: harness-oidc
+      - name: gcp_provider_id
+        type: String
+        value: harness-oidc
+      - name: gcp_service_account_email
+        type: String
+        value: harness-oidc@harness-management.iam.gserviceaccount.com
+      - name: organization_name
+        type: String
+        value: Test Org
+      - name: project_name
+        type: String
+        value: Test Project
+      - name: scope_level
+        type: String
+        value: organization
+      - name: platform_configs_repo_name
+        type: String
+        value: ""
+      - name: platform_configs_branch
+        type: String
+        value: main
+  name: Test
+  identifier: Test
+  orgIdentifier: platform_bootstrap
+  projectIdentifier: platform_management
