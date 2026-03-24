@@ -1,20 +1,20 @@
-# Account-level service account for the Tofu Deployer pipeline.
+# Account-level service account for the Harness Bootstrap pipeline.
 # Scoped at account level so it can manage orgs and projects across the platform.
 
-resource "harness_platform_service_account" "tofu_deployer" {
-  identifier  = "tofu_deployer"
-  name        = "Tofu Deployer"
-  email       = "tofu-deployer@service.harness.io"
+resource "harness_platform_service_account" "harness_bootstrap" {
+  identifier  = "harness_bootstrap"
+  name        = "Harness Bootstrap"
+  email       = "harness-bootstrap@service.harness.io"
   account_id  = var.harness_platform_account
-  description = "Service account for OpenTofu pipeline deployments — manages orgs, projects, and resources via the tofu_deploy pipeline"
+  description = "Service account for the Harness Bootstrap pipeline — manages orgs, projects, and resources via the tofu_deploy pipeline"
 }
 
-resource "harness_platform_apikey" "tofu_deployer" {
-  depends_on = [harness_platform_service_account.tofu_deployer]
+resource "harness_platform_apikey" "harness_bootstrap" {
+  depends_on = [harness_platform_service_account.harness_bootstrap]
 
-  identifier  = "tofu_deployer_apikey"
-  name        = "Tofu Deployer API Key"
-  parent_id   = harness_platform_service_account.tofu_deployer.identifier
+  identifier  = "harness_bootstrap_apikey"
+  name        = "Harness Bootstrap API Key"
+  parent_id   = harness_platform_service_account.harness_bootstrap.identifier
   apikey_type = "SERVICE_ACCOUNT"
   account_id  = var.harness_platform_account
 
@@ -23,39 +23,41 @@ resource "harness_platform_apikey" "tofu_deployer" {
   }
 }
 
-resource "harness_platform_token" "tofu_deployer" {
-  depends_on = [harness_platform_apikey.tofu_deployer]
+resource "harness_platform_token" "harness_bootstrap" {
+  depends_on = [harness_platform_apikey.harness_bootstrap]
 
-  identifier  = "tofu_deployer_token"
-  name        = "Tofu Deployer Token"
-  parent_id   = harness_platform_service_account.tofu_deployer.identifier
+  identifier  = "harness_bootstrap_token"
+  name        = "Harness Bootstrap Token"
+  parent_id   = harness_platform_service_account.harness_bootstrap.identifier
   apikey_type = "SERVICE_ACCOUNT"
-  apikey_id   = harness_platform_apikey.tofu_deployer.identifier
+  apikey_id   = harness_platform_apikey.harness_bootstrap.identifier
   account_id  = var.harness_platform_account
 }
 
 # Account-level secret storing the SA token value.
-# Referenced in pipelines as: <+secrets.getValue("account.harness_platform_api_key")>
-resource "harness_platform_secret_text" "tofu_deployer_token" {
-  depends_on = [harness_platform_token.tofu_deployer]
+# Referenced in pipelines as: <+secrets.getValue("account.harness_bootstrap_api_key")>
+resource "harness_platform_secret_text" "harness_bootstrap" {
+  depends_on = [harness_platform_token.harness_bootstrap, module.projects]
 
-  identifier                = "harness_platform_api_key"
-  name                      = "Harness Platform API Key"
-  description               = "Auto-generated token for the Tofu Deployer service account"
+  identifier                = "harness_bootstrap_api_key"
+  name                      = "Harness Bootstrap API Key"
+  description               = "Auto-generated token for the Harness Bootstrap service account"
+  org_id                    = "harness_platform_accelerator"
+  project_id                = "platform_management"
   secret_manager_identifier = "harnessSecretManager"
 
   value_type = "Inline"
-  value      = harness_platform_token.tofu_deployer.value
+  value      = harness_platform_token.harness_bootstrap.value
 }
 
-resource "harness_platform_role_assignments" "tofu_deployer_account_admin" {
-  depends_on = [harness_platform_service_account.tofu_deployer]
+resource "harness_platform_role_assignments" "harness_bootstrap_account_admin" {
+  depends_on = [harness_platform_service_account.harness_bootstrap]
 
   resource_group_identifier = "_all_resources_including_child_scopes"
   role_identifier           = "_account_admin"
 
   principal {
-    identifier = harness_platform_service_account.tofu_deployer.id
+    identifier = harness_platform_service_account.harness_bootstrap.id
     type       = "SERVICE_ACCOUNT"
   }
 

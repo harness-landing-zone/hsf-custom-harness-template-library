@@ -31,6 +31,17 @@ variable "project_name" {
   type        = string
   description = "[Optional] Project display name to create under the organization."
   default     = null
+
+  validation {
+    condition     = var.project_name != null || var.scope_level != "project" || var.project_key != null
+    error_message = "When scope_level is project, project_name or project_key must be set."
+  }
+}
+
+variable "project_key" {
+  type        = string
+  description = "[Optional] Project folder key when it differs from the project display name."
+  default     = null
 }
 
 variable "project_id" {
@@ -39,31 +50,26 @@ variable "project_id" {
   default     = null
 }
 
-variable "create_organization" {
-  type        = bool
-  description = "[Optional] Set to true to deploy the organization module. This also creates any projects discovered in that org config."
-  default     = false
-
-  validation {
-    condition     = !(var.create_organization && var.create_project)
-    error_message = "create_organization and create_project are separate deployment modes. Use only one of them per run."
-  }
+variable "organization_description" {
+  type        = string
+  description = "[Optional] Organization description."
+  default     = "Harness Organization managed by Solutions Factory"
 }
 
-variable "create_account" {
-  type        = bool
-  description = "[Optional] Set to true to deploy account-level resources through the harness-platform-setup module."
-  default     = false
+variable "project_description" {
+  type        = string
+  description = "[Optional] Project description."
+  default     = "Harness Project managed by Solutions Factory"
 }
 
-variable "create_project" {
-  type        = bool
-  description = "[Optional] Set to true to deploy only the project module against an existing organization."
-  default     = false
+variable "scope_level" {
+  type        = string
+  description = "[Optional] Deployment scope: account (platform team only — account-level resources), organization (org + all discovered projects), or project (single project into existing org)."
+  default     = "organization"
 
   validation {
-    condition     = !var.create_project || var.project_name != null
-    error_message = "When create_project is true, project_name must be set."
+    condition     = contains(["account", "organization", "project"], var.scope_level)
+    error_message = "scope_level must be account, organization, or project."
   }
 }
 

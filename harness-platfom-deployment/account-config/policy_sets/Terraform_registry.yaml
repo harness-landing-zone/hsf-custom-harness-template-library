@@ -1,0 +1,8 @@
+---
+name: Mandatory Terraform Policy for Registry
+action: afterTerraformPlan
+type: terraformPlan
+enabled: true
+policies:
+  - identifier: enforce_use_of_terraform_registry
+    severity: warning

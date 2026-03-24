@@ -1,45 +1,105 @@
-
 locals {
-  org_identifier = coalesce(var.organization_id, replace(replace(var.organization_name, " ", "_"), "-", "_"))
+  org_identifier = coalesce(
+    var.organization_id,
+    replace(replace(coalesce(var.organization_name, ""), " ", "_"), "-", "_")
+  )
 }
 
-module "harness_platform_setup" {
-  count  = var.create_account ? 1 : 0
-  source = "../harness-platform-setup"
+##############################################################################
+# Account scope
+# Deploys account-level resources (groups, roles, resource groups, policies,
+# connectors) when create_account = true.
+# Templates come from account-config/ in this folder.
+##############################################################################
+
+module "account" {
+  count  = var.scope_level == "account" ? 1 : 0
+  source = "../modules/harness-resources"
 
   harness_platform_account = var.harness_platform_account
   harness_platform_url     = var.harness_platform_url
   tags                     = var.tags
-}
-
-data "harness_platform_organization" "existing" {
-  count      = var.create_project && !var.create_organization ? 1 : 0
-  name       = var.organization_name
-}
-
-module "harness_organization" {
-  count  = var.create_organization ? 1 : 0
-  source = "../harness-organization"
-
-  organization_name         = var.organization_name
-  harness_platform_account  = var.harness_platform_account
-  harness_platform_url      = var.harness_platform_url
-  tags                      = var.tags
-  configs_relative_path     = var.configs_relative_path
+  configs_root             = local.configs_root
+  templates_root           = local.templates_root
+  default_account_template = "account-config"
   git_connector_credentials = var.git_connector_credentials
 }
 
-module "harness_project" {
-  depends_on = [module.harness_organization]
-  count      = var.create_project ? 1 : 0
-  source     = "../harness-project"
+##############################################################################
+# Organization scope
+# Creates the org and deploys all org-level resources when
+# scope_level = "organization".
+# Templates come from org-default-config/ in this folder.
+##############################################################################
 
-  organization_id          = try(data.harness_platform_organization.existing[0].id, local.org_identifier)
-  project_name             = var.project_name
-  project_key              = var.project_name
-  configs_root             = var.configs_relative_path
-  org_root                 = "${var.configs_relative_path}/organizations/${var.organization_name}"
-  harness_platform_account = var.harness_platform_account
-  harness_platform_url     = var.harness_platform_url
-  tags                     = var.tags
+module "organization" {
+  count  = var.scope_level == "organization" ? 1 : 0
+  source = "../modules/harness-resources"
+
+  harness_platform_account  = var.harness_platform_account
+  harness_platform_url      = var.harness_platform_url
+  organization_name         = var.organization_name
+  organization_id           = var.organization_id
+  organization_description  = var.organization_description
+  tags                      = var.tags
+  configs_root              = local.configs_root
+  templates_root            = local.templates_root
+  git_connector_credentials = var.git_connector_credentials
+}
+
+##############################################################################
+# Org-bootstrap projects
+# One module instance per project discovered under
+# platform-configs/organizations/<org>/projects/*/config.yaml.
+# All resources land in the same state as the org above.
+# Only active when scope_level = "organization" AND create_projects = true.
+##############################################################################
+
+module "projects" {
+  for_each   = local.project_instances
+  source     = "../modules/harness-resources"
+  depends_on = [module.organization]
+
+  harness_platform_account  = var.harness_platform_account
+  harness_platform_url      = var.harness_platform_url
+  organization_id           = one(module.organization[*].organization_id)
+  project_name              = each.value.name
+  project_key               = each.value.folder
+  tags                      = var.tags
+  configs_root              = local.configs_root
+  org_root                  = "${local.configs_root}/organizations/${var.organization_name}"
+  templates_root            = local.templates_root
+  git_connector_credentials = var.git_connector_credentials
+}
+
+##############################################################################
+# Single project (IDP)
+# Deploys one named project into an existing org when
+# scope_level = "project".
+# The org must already exist in Harness (looked up by identifier).
+# Templates come from project-default-config/ in this folder.
+##############################################################################
+
+data "harness_platform_organization" "existing" {
+  count      = var.scope_level == "project" ? 1 : 0
+  identifier = local.org_identifier
+}
+
+module "project" {
+  count      = var.scope_level == "project" ? 1 : 0
+  source     = "../modules/harness-resources"
+  depends_on = [data.harness_platform_organization.existing]
+
+  harness_platform_account  = var.harness_platform_account
+  harness_platform_url      = var.harness_platform_url
+  organization_name         = var.organization_name
+  organization_id           = coalesce(var.organization_id, try(data.harness_platform_organization.existing[0].id, null), local.org_identifier)
+  project_name              = var.project_name
+  project_key               = var.project_key
+  project_id                = var.project_id
+  project_description       = var.project_description
+  tags                      = var.tags
+  configs_root              = local.configs_root
+  templates_root            = local.templates_root
+  git_connector_credentials = var.git_connector_credentials
 }

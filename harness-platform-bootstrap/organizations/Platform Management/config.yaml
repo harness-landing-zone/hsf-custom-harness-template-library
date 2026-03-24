@@ -1,8 +1,0 @@
-name: Platform Management
-identifier: "platform_management"
-description: Harness Platform Management Organization — manages the Landing Zone template library pipelines and infrastructure
-default_org_template: "bootstrap-org"
-default_project_template: "bootstrap-project"
-tags:
-  purpose: Platform management
-  owner: platform-team
