@@ -71,6 +71,11 @@ pipeline:
       description: "Relative path to configs within the codebase repo (same-repo alternative to platform_configs_repo_name)"
       required: false
       value: <+input>
+    - name: hanrness_platform_endpoint
+      type: String
+      description: Endpoint URL for the Harness Platform API (e.g. https://app.harness.io/gateway). Only needed if using a self-hosted or custom domain instance.
+      required: false
+      value: <+input>.default(https://app.harness.io/gateway)   
   stages:
     - stage:
         name: tofu Plan
@@ -143,7 +148,7 @@ pipeline:
                     shell: Sh
                     command: |
                       set -e
-                      cd /harness/harness-platfom-deployment
+                      cd harness/harness-platfom-deployment
 
                       # Use resolved org if available, otherwise fall back to pipeline variable
                       if [ -n "$RESOLVED_ORG" ] && [ "$RESOLVED_ORG" != "null" ]; then
@@ -171,6 +176,7 @@ pipeline:
                         -backend-config="prefix=${STATE_PREFIX}"
                     envVariables:
                       GOOGLE_OAUTH_ACCESS_TOKEN: <+steps.gcp_oidc_token_plan.output.outputVariables.GCLOUD_ACCESS_TOKEN>
+                      HARNESS_ENDPOINT: <+pipeline.variables.hanrness_platform_endpoint>
                       TF_VAR_harness_platform_account: <+account.identifier>
                       TF_VAR_organization_name: <+pipeline.variables.organization_name>
                       TF_VAR_project_name: <+pipeline.variables.project_name>
@@ -196,7 +202,7 @@ pipeline:
                     shell: Sh
                     command: |
                       set -e
-                      cd /harness/harness-platfom-deployment
+                      cd harness/harness-platfom-deployment
 
                       # External repo configs (separate GitClone)
                       if [ -d "/harness/platform-configs/<+pipeline.variables.platform_configs_repo_name>" ]; then
@@ -214,6 +220,7 @@ pipeline:
                     envVariables:
                       HARNESS_PLATFORM_API_KEY: <+secrets.getValue("harness_bootstrap_api_key")>
                       HARNESS_ACCOUNT_ID: <+account.identifier>
+                      HARNESS_ENDPOINT: <+pipeline.variables.hanrness_platform_endpoint>
                       GOOGLE_OAUTH_ACCESS_TOKEN: <+steps.gcp_oidc_token_plan.output.outputVariables.GCLOUD_ACCESS_TOKEN>
                       TF_VAR_harness_platform_account: <+account.identifier>
                       TF_VAR_organization_name: <+steps.tofu_init_plan.output.outputVariables.EFFECTIVE_ORG_NAME>
@@ -237,7 +244,7 @@ pipeline:
                     command: |
                       set -e
 
-                      PLAN_FILE="/harness/harness-platfom-deployment/tfplan"
+                      PLAN_FILE="harness/harness-platfom-deploymentt/tfplan"
                       if [ ! -f "$PLAN_FILE" ]; then
                         echo "ERROR: Plan file not found at $PLAN_FILE"
                         exit 1
@@ -394,7 +401,7 @@ pipeline:
                     shell: Sh
                     command: |
                       set -e
-                      cd /harness/harness-platfom-deployment
+                      cd harness/harness-platfom-deployment
 
                       # Re-derive org name from the plan stage output
                       ORG_NAME="$EFFECTIVE_ORG_NAME"
@@ -445,7 +452,7 @@ pipeline:
                       STATE_PREFIX="$STATE_PREFIX"
                       EXECUTION_ID="<+pipeline.executionId>"
                       PLAN_OBJECT="${STATE_PREFIX}/plans/${EXECUTION_ID}.tfplan"
-                      PLAN_FILE="/harness/harness-platfom-deployment/tfplan"
+                      PLAN_FILE="harness/harness-platfom-deploymentt/tfplan"
 
                       echo "Downloading plan from gs://${GCS_BUCKET}/${PLAN_OBJECT}"
 
@@ -482,7 +489,7 @@ pipeline:
                     shell: Sh
                     command: |
                       set -e
-                      cd /harness/harness-platfom-deployment
+                      cd harness/harness-platfom-deployment
 
                       # External repo configs (separate GitClone)
                       if [ -d "/harness/platform-configs/<+pipeline.variables.platform_configs_repo_name>" ]; then
@@ -496,6 +503,7 @@ pipeline:
                       tofu apply -auto-approve tfplan
                     envVariables:
                       HARNESS_PLATFORM_API_KEY: <+secrets.getValue("harness_bootstrap_api_key")>
+                      HARNESS_ENDPOINT: <+pipeline.variables.hanrness_platform_endpoint>
                       HARNESS_ACCOUNT_ID: <+account.identifier>
                       GOOGLE_OAUTH_ACCESS_TOKEN: <+steps.gcp_oidc_token_apply.output.outputVariables.GCLOUD_ACCESS_TOKEN>
                       TF_VAR_harness_platform_account: <+account.identifier>
