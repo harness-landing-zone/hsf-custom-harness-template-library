@@ -25,12 +25,12 @@ locals {
   )
 
   # Absolute path to this org's config folder
-  org_directory = (
+org_directory = (
     var.org_root != null
     ? var.org_root
-    : "${local.platform_configs_dir}/organizations/${coalesce(var.organization_name, "")}"
+    : "${local.platform_configs_dir}/organizations/${var.organization_name != null ? var.organization_name : ""}"
   )
-
+  
   # The project config folder key — prefer explicit var, then derive from project_name.
   effective_project_key = (
     var.project_key != null   ? var.project_key :
