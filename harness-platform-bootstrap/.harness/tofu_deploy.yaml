@@ -2,7 +2,7 @@ pipeline:
   name: Tofu Deploy
   identifier: tofu_deploy
   projectIdentifier: platform_management
-  orgIdentifier: harness_platform_accelerator
+  orgIdentifier: platform_bootstrap
   tags: {}
   properties:
     ci:
@@ -100,71 +100,7 @@ pipeline:
                   timeout: 10m
                   when:
                     stageStatus: Success
-                    condition: '<+pipeline.variables.platform_configs_repo_name> != null'
-                  failureStrategies:
-                    - onFailure:
-                        errors:
-                          - AllErrors
-                        action:
-                          type: Abort
-              - step:
-                  type: Run
-                  name: Resolve Organization
-                  identifier: resolve_org_plan
-                  spec:
-                    connectorRef: account.harnessImage
-                    image: alpine/git:latest
-                    shell: Sh
-                    command: |
-                      set -e
-
-                      ORG_NAME="<+pipeline.variables.organization_name>"
-
-                      # If org name was provided (manual run), use it directly
-                      if [ -n "$ORG_NAME" ] && [ "$ORG_NAME" != "null" ] && [ "$ORG_NAME" != "<+input>" ]; then
-                        echo "Using provided organization_name: $ORG_NAME"
-                      else
-                        # Resolve from changed files in the config repo
-                        CONFIG_DIR="/harness/platform-configs/<+pipeline.variables.platform_configs_repo_name>"
-                        if [ ! -d "$CONFIG_DIR" ]; then
-                          echo "ERROR: Config repo not cloned — cannot resolve organization"
-                          exit 1
-                        fi
-
-                        cd "$CONFIG_DIR"
-
-                        BRANCH="<+pipeline.variables.platform_configs_branch>"
-                        if [ "$BRANCH" = "main" ]; then
-                          CHANGED=$(git diff HEAD~1 --name-only 2>/dev/null || git diff --name-only)
-                        else
-                          git fetch origin main --quiet 2>/dev/null || true
-                          CHANGED=$(git diff origin/main...HEAD --name-only 2>/dev/null || git diff --name-only)
-                        fi
-
-                        ORGS=$(echo "$CHANGED" | grep '^organizations/' | cut -d'/' -f2 | sort -u)
-                        ORG_COUNT=$(echo "$ORGS" | grep -c . || true)
-
-                        if [ "$ORG_COUNT" -gt 1 ]; then
-                          echo "ERROR: Multiple organizations changed — one org per push required."
-                          echo "Changed orgs:"
-                          echo "$ORGS"
-                          exit 1
-                        elif [ "$ORG_COUNT" -eq 0 ]; then
-                          echo "ERROR: No organization changes found under organizations/"
-                          exit 1
-                        fi
-
-                        ORG_NAME=$(echo "$ORGS" | head -1)
-                        echo "Resolved organization from changed files: $ORG_NAME"
-                      fi
-
-                      export RESOLVED_ORG_NAME="$ORG_NAME"
-                    outputVariables:
-                      - name: RESOLVED_ORG_NAME
-                  timeout: 5m
-                  when:
-                    stageStatus: Success
-                    condition: '<+pipeline.variables.platform_configs_repo_name> != null'
+                    condition: <+pipeline.variables.platform_configs_repo_name> != null
                   failureStrategies:
                     - onFailure:
                         errors:
@@ -377,7 +313,7 @@ pipeline:
                     approverInputs: []
         when:
           pipelineStatus: Success
-          condition: '<+pipeline.variables.tofu_action> != "plan"'
+          condition: <+pipeline.variables.tofu_action> != "plan"
     - stage:
         name: tofu Apply
         identifier: tofu_apply
@@ -411,7 +347,7 @@ pipeline:
                   timeout: 10m
                   when:
                     stageStatus: Success
-                    condition: '<+pipeline.variables.platform_configs_repo_name> != null && <+pipeline.variables.platform_configs_repo_name> != ""'
+                    condition: <+pipeline.variables.platform_configs_repo_name> != null && <+pipeline.variables.platform_configs_repo_name> != ""
                   failureStrategies:
                     - onFailure:
                         errors:
@@ -562,7 +498,7 @@ pipeline:
                           type: Abort
         when:
           pipelineStatus: Success
-          condition: '<+pipeline.variables.tofu_action> != "plan"'
+          condition: <+pipeline.variables.tofu_action> != "plan"
         failureStrategies:
           - onFailure:
               errors:
