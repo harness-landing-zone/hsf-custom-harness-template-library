@@ -245,7 +245,7 @@ pipeline:
                     command: |
                       set -e
 
-                      PLAN_FILE="harness/harness-platfom-deploymentt/tfplan"
+                      PLAN_FILE="/harness/harness-platfom-deployment/tfplan"
                       if [ ! -f "$PLAN_FILE" ]; then
                         echo "ERROR: Plan file not found at $PLAN_FILE"
                         exit 1
@@ -453,7 +453,7 @@ pipeline:
                       STATE_PREFIX="$STATE_PREFIX"
                       EXECUTION_ID="<+pipeline.executionId>"
                       PLAN_OBJECT="${STATE_PREFIX}/plans/${EXECUTION_ID}.tfplan"
-                      PLAN_FILE="harness/harness-platfom-deploymentt/tfplan"
+                      PLAN_FILE="/harness/harness-platfom-deployment/tfplan"
 
                       echo "Downloading plan from gs://${GCS_BUCKET}/${PLAN_OBJECT}"
 
