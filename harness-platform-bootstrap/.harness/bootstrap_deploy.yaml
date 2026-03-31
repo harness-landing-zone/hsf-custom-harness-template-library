@@ -56,6 +56,11 @@ pipeline:
       description: Harness secret ref for the GitHub App PEM key (e.g. org.platform_configs_github_app_key)
       required: false
       value: <+input>.default(org.platform_configs_github_app_key)
+    - name: hanrness_platform_endpoint
+      type: String
+      description: Endpoint URL for the Harness Platform API (e.g. https://app.harness.io/gateway). Only needed if using a self-hosted or custom domain instance.
+      required: false
+      value: <+input>.default(https://app.harness.io/gateway)   
   stages:
     - stage:
         name: Bootstrap Plan
@@ -149,6 +154,7 @@ pipeline:
                     envVariables:
                       HARNESS_PLATFORM_API_KEY: <+secrets.getValue("harness_bootstrap_api_key")>
                       HARNESS_ACCOUNT_ID: <+account.identifier>
+                      HARNESS_ENDPOINT: <+pipeline.variables.hanrness_platform_endpoint>
                       GOOGLE_OAUTH_ACCESS_TOKEN: <+steps.gcp_oidc_token_plan.output.outputVariables.GCLOUD_ACCESS_TOKEN>
                       TF_VAR_harness_platform_account: <+account.identifier>
                       TF_VAR_organization_name: harness_platform_accelerator
@@ -382,6 +388,7 @@ pipeline:
                       tofu apply -auto-approve tfplan
                     envVariables:
                       HARNESS_PLATFORM_API_KEY: <+secrets.getValue("harness_bootstrap_api_key")>
+                      HARNESS_ENDPOINT: <+pipeline.variables.hanrness_platform_endpoint>
                       HARNESS_ACCOUNT_ID: <+account.identifier>
                       GOOGLE_OAUTH_ACCESS_TOKEN: <+steps.gcp_oidc_token_apply.output.outputVariables.GCLOUD_ACCESS_TOKEN>
                       TF_VAR_harness_platform_account: <+account.identifier>
