@@ -8,7 +8,7 @@ pipeline:
     ci:
       codebase:
         connectorRef: org.platform_configs
-        repoName: <+input>
+        repoName: hsf-custom-harness-template-library
         build: <+input>
   variables:
     - name: tofu_action
