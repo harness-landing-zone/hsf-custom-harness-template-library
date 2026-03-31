@@ -147,8 +147,9 @@ pipeline:
                     image: ghcr.io/opentofu/opentofu:latest
                     shell: Sh
                     command: |
+                      pwd
                       set -e
-                      cd harness/harness-platfom-deployment
+                      cd /harness/harness-platfom-deployment
 
                       # Use resolved org if available, otherwise fall back to pipeline variable
                       if [ -n "$RESOLVED_ORG" ] && [ "$RESOLVED_ORG" != "null" ]; then
@@ -202,7 +203,7 @@ pipeline:
                     shell: Sh
                     command: |
                       set -e
-                      cd harness/harness-platfom-deployment
+                      cd /harness/harness-platfom-deployment
 
                       # External repo configs (separate GitClone)
                       if [ -d "/harness/platform-configs/<+pipeline.variables.platform_configs_repo_name>" ]; then
@@ -401,7 +402,7 @@ pipeline:
                     shell: Sh
                     command: |
                       set -e
-                      cd harness/harness-platfom-deployment
+                      cd /harness/harness-platfom-deployment
 
                       # Re-derive org name from the plan stage output
                       ORG_NAME="$EFFECTIVE_ORG_NAME"
@@ -489,7 +490,7 @@ pipeline:
                     shell: Sh
                     command: |
                       set -e
-                      cd harness/harness-platfom-deployment
+                      cd /harness/harness-platfom-deployment
 
                       # External repo configs (separate GitClone)
                       if [ -d "/harness/platform-configs/<+pipeline.variables.platform_configs_repo_name>" ]; then
