@@ -66,6 +66,11 @@ pipeline:
       description: Branch for the platform-configs repo when using the git-driven approach
       required: false
       value: <+input>.default(main)
+    - name: configs_relative_path
+      type: String
+      description: "Relative path to configs within the codebase repo (same-repo alternative to platform_configs_repo_name)"
+      required: false
+      value: <+input>
   stages:
     - stage:
         name: tofu Plan
@@ -193,8 +198,12 @@ pipeline:
                       set -e
                       cd /harness/harness-platfom-deployment
 
+                      # External repo configs (separate GitClone)
                       if [ -d "/harness/platform-configs/<+pipeline.variables.platform_configs_repo_name>" ]; then
                         export TF_VAR_configs_relative_path="../platform-configs/<+pipeline.variables.platform_configs_repo_name>"
+                      # Same-repo configs (already cloned via codebase)
+                      elif [ -n "<+pipeline.variables.configs_relative_path>" ] && [ "<+pipeline.variables.configs_relative_path>" != "null" ]; then
+                        export TF_VAR_configs_relative_path=<+pipeline.variables.configs_relative_path>
                       fi
 
                       if [ "<+pipeline.variables.tofu_action>" = "destroy" ]; then
@@ -475,8 +484,12 @@ pipeline:
                       set -e
                       cd /harness/harness-platfom-deployment
 
+                      # External repo configs (separate GitClone)
                       if [ -d "/harness/platform-configs/<+pipeline.variables.platform_configs_repo_name>" ]; then
                         export TF_VAR_configs_relative_path="../platform-configs/<+pipeline.variables.platform_configs_repo_name>"
+                      # Same-repo configs (already cloned via codebase)
+                      elif [ -n "<+pipeline.variables.configs_relative_path>" ] && [ "<+pipeline.variables.configs_relative_path>" != "null" ]; then
+                        export TF_VAR_configs_relative_path=<+pipeline.variables.configs_relative_path>
                       fi
 
                       # Apply the exact plan that was reviewed
