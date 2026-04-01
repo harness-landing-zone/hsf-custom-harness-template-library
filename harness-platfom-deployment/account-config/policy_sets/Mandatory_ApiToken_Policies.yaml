@@ -1,4 +1,5 @@
 ---
+name: Mandatory API Token Policies
 action: onsave
 type: token
 policies:

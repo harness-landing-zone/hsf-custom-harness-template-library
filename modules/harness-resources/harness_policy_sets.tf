@@ -9,8 +9,6 @@ resource "harness_platform_policyset" "policy_sets" {
   lifecycle {
     precondition {
       condition = alltrue([
-        contains(keys(each.value.cnf), "identifier"),
-        contains(keys(each.value.cnf), "name"),
         contains(keys(each.value.cnf), "action"),
         contains(keys(each.value.cnf), "type"),
         contains(["onrun", "onsave", "onstep", "afterTerraformPlan"], lookup(each.value.cnf, "action", "missing-action"))
