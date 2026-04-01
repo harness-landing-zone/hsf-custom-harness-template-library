@@ -1,0 +1,32 @@
+TA _ Org
+CICD - Devops  Group
+ALL Admin level on the Org Template lifecycle managemnt etc 
+Security Team Group
+SNI SNI - Group-1 (User1 User2 User3 [Can run Pipelines of Dev-test-model ])
+          Group-2 (User1 User2 User3 [Can Approve and run the prod ])
+ 600 Apps
+ AWS Accounts
+    Record Keeping - Priority One
+     Evns - Dev - Test - Model - Prod
+    Spring Board Priority One 
+      Evns - Dev - Test - Model - Prod
+    AppLifecycle {New Deployments}
+      Evns - Dev - Test - Model - Prod
+    Workplace Priority One (ECS Accounts)
+      Evns - Dev - Test - Model - Prod
+    Shared Services
+      Evns - Dev - Test - Model - Prod
+WFG
+Finance
+
+
+Developers And Groups
+
+sni-Developer Group
+Can run Pipelines of Dev/Test Pipeline Environemnts
+wfg-Developer Group
+Can run Pipelines of Dev/Test Pipeline Environemnts
+Deployment Managment Group
+Can run Pipelines of Dev/Test/Model/Prod Pipeline Environemnts And approve the promotion to prod
+
+Read only on all projects and Pipeliens

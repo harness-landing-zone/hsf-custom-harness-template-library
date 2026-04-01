@@ -8,7 +8,7 @@ description: IACM Developers group allowed to Use Workspaces in the Inherited Or
 tags:
   purpose: IACM Admins
 role_bindings:
-- role: Shared_Resource_Access
+- role: shared_resource_access
   resource_group: _all_account_level_resources
 
 
