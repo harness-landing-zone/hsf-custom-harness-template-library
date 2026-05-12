@@ -1,0 +1,6 @@
+description: "Release Managers for Application One  approve and deploy to production"
+Name: T7 Ops Team
+tags:
+  purpose: OpsTeam
+  managed_by: centeral team
+

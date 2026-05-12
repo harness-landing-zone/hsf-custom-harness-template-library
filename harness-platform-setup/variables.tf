@@ -14,3 +14,10 @@ variable "tags" {
   description = "[Optional] Provide a Map of Tags to associate with the resources"
   default     = {}
 }
+
+variable "harness_platform_key" {
+  type        = string
+  description = "[Required] Enter the Harness Platform API Key for your account"
+  default     = null # If Not passed, then the ENV HARNESS_PLATFORM_API_KEY will be used
+  sensitive   = true
+}
