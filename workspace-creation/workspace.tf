@@ -30,7 +30,7 @@ locals {
 
   workspace_name = (
     var.scope_level == "account" ? "Account Setup" :
-    var.scope_level == "project" ? "${var.organization_name} / ${var.project_name}" :
+    var.scope_level == "project" ? "${var.organization_name}/${var.project_name}" :
     var.organization_name
   )
 
@@ -67,6 +67,11 @@ locals {
     {
       key        = "configs_relative_path"
       value      = var.configs_relative_path
+      value_type = "string"
+    },
+    {
+      key        = "platform_configs_repo_name"
+      value      = var.platform_configs_repo_name
       value_type = "string"
     },
   ]
