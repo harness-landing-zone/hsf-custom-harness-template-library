@@ -85,6 +85,11 @@ variable "configs_relative_path" {
   default     = "../platform-configs"
 }
 
+variable "platform_configs_repo_name" {
+  type    = string
+  default = ""
+}
+
 # ── Shared local (same logic as harness-platfom-deployment) ───────────────
 locals {
   org_identifier = (

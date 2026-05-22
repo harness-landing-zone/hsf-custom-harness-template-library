@@ -27,8 +27,3 @@ variable "workspace_api_key_secret_ref" {
   type    = string
   default = "account.harness_bootstrap_api_key"
 }
-
-variable "platform_configs_repo_name" {
-  type    = string
-  default = null
-}
