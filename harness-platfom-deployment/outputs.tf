@@ -20,3 +20,8 @@ output "deployed_projects" {
   description = "Map of folder-key → project identifier for org-bootstrap runs"
   value       = { for k, m in module.projects : k => m.project_identifier }
 }
+
+output "platform_configs_repo_name" {
+  description = "Name of the platform-configs repository"
+  value       = var.platform_configs_repo_name
+}
