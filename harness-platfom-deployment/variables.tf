@@ -89,9 +89,3 @@ variable "configs_relative_path" {
   description = "Relative path to the platform-configs directory from this module. This is used to resolve the organization configuration files, independent of the current working directory."
   default     = "../platform-configs"
 }
-
-variable "platform_configs_repo_name" {
-  type        = string
-  description = "Name of the platform-configs repository."
-  default     = ""
-}
