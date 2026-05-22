@@ -202,7 +202,7 @@ pipeline:
                     shell: Sh
                     command: |
                       set -e
-                      cd /harness/harness-platfom-deployment
+                      cd /harness/harness-platform-deployment
 
                       # Use resolved org if available, otherwise fall back to pipeline variable
                       if [ -n "$RESOLVED_ORG" ] && [ "$RESOLVED_ORG" != "null" ]; then
@@ -255,7 +255,7 @@ pipeline:
                     shell: Sh
                     command: |
                       set -e
-                      cd /harness/harness-platfom-deployment
+                      cd /harness/harness-platform-deployment
 
                       if [ -d "/harness/platform-configs/<+pipeline.variables.platform_configs_repo_name>" ]; then
                         export TF_VAR_configs_relative_path="../platform-configs/<+pipeline.variables.platform_configs_repo_name>"
@@ -292,7 +292,7 @@ pipeline:
                     command: |
                       set -e
 
-                      PLAN_FILE="/harness/harness-platfom-deployment/tfplan"
+                      PLAN_FILE="/harness/harness-platform-deployment/tfplan"
                       if [ ! -f "$PLAN_FILE" ]; then
                         echo "ERROR: Plan file not found at $PLAN_FILE"
                         exit 1
@@ -449,7 +449,7 @@ pipeline:
                     shell: Sh
                     command: |
                       set -e
-                      cd /harness/harness-platfom-deployment
+                      cd /harness/harness-platform-deployment
 
                       # Re-derive org name from the plan stage output
                       ORG_NAME="$EFFECTIVE_ORG_NAME"
@@ -500,7 +500,7 @@ pipeline:
                       STATE_PREFIX="$STATE_PREFIX"
                       EXECUTION_ID="<+pipeline.executionId>"
                       PLAN_OBJECT="${STATE_PREFIX}/plans/${EXECUTION_ID}.tfplan"
-                      PLAN_FILE="/harness/harness-platfom-deployment/tfplan"
+                      PLAN_FILE="/harness/harness-platform-deployment/tfplan"
 
                       echo "Downloading plan from gs://${GCS_BUCKET}/${PLAN_OBJECT}"
 
@@ -537,7 +537,7 @@ pipeline:
                     shell: Sh
                     command: |
                       set -e
-                      cd /harness/harness-platfom-deployment
+                      cd /harness/harness-platform-deployment
 
                       if [ -d "/harness/platform-configs/<+pipeline.variables.platform_configs_repo_name>" ]; then
                         export TF_VAR_configs_relative_path="../platform-configs/<+pipeline.variables.platform_configs_repo_name>"

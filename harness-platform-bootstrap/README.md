@@ -85,7 +85,7 @@ That makes this folder self-contained for the initial bootstrap run.
 
 1. Run this folder locally to create the first org, first projects, bootstrap connector, bootstrap secrets, and the deployer service account.
 2. Use the bootstrap pipeline in Harness to provision additional environments.
-3. Migrate the pipeline to use [harness-platfom-deployment](../harness-platfom-deployment) as the root consumer once that flow is validated.
+3. Migrate the pipeline to use [harness-platform-deployment](../harness-platform-deployment) as the root consumer once that flow is validated.
 4. Use the reusable modules behind that root:
    `harness-platform-setup`, `harness-organization`, and `harness-project`.
 

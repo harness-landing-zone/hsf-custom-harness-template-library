@@ -46,7 +46,7 @@ locals {
   workspace_import_id = "${local.ws_org_id}/${local.ws_project_id}/${local.workspace_identifier}"
 
   # Scope-gated variable groups. Omitted groups are not sent to the workspace,
-  # so the downstream harness-platfom-deployment falls back to its defaults
+  # so the downstream harness-platform-deployment falls back to its defaults
   # and its scope_level-gated modules stay inert.
   base_tf_vars = [
     {

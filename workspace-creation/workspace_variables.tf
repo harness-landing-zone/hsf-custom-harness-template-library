@@ -90,7 +90,7 @@ variable "platform_configs_repo_name" {
   default = ""
 }
 
-# ── Shared local (same logic as harness-platfom-deployment) ───────────────
+# ── Shared local (same logic as harness-platform-deployment) ───────────────
 locals {
   org_identifier = (
     var.organization_id != null ? var.organization_id :
