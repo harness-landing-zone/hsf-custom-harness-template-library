@@ -161,11 +161,6 @@ module "hpa_workspace" {
       value_type = "string"
     },
   ]
-
-  default_pipelines = {
-    provision = "tofu_deploy_iacm"
-    destroy   = "tofu_deploy_iacm"
-  }
 }
 
 

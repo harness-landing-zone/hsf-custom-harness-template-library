@@ -87,7 +87,7 @@ variable "configs_relative_path" {
 
 variable "platform_configs_repo_name" {
   type    = string
-  default = ""
+  default = "local-repo"
 }
 
 # ── Shared local (same logic as harness-platform-deployment) ───────────────
