@@ -10,7 +10,7 @@ variable "workspace_repository_connector" {
 
 variable "workspace_repository_path" {
   type    = string
-  default = "harness-platfom-deployment"
+  default = "harness-platform-deployment"
 }
 
 variable "workspace_repository_branch" {

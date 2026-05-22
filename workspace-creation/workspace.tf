@@ -44,6 +44,73 @@ locals {
 
   # Import address for terraform import: org_id/project_id/workspace_id
   workspace_import_id = "${local.ws_org_id}/${local.ws_project_id}/${local.workspace_identifier}"
+
+  # Scope-gated variable groups. Omitted groups are not sent to the workspace,
+  # so the downstream harness-platfom-deployment falls back to its defaults
+  # and its scope_level-gated modules stay inert.
+  base_tf_vars = [
+    {
+      key        = "harness_platform_account"
+      value      = var.harness_platform_account
+      value_type = "string"
+    },
+    {
+      key        = "harness_platform_url"
+      value      = var.harness_platform_url
+      value_type = "string"
+    },
+    {
+      key        = "scope_level"
+      value      = var.scope_level
+      value_type = "string"
+    },
+    {
+      key        = "configs_relative_path"
+      value      = var.configs_relative_path
+      value_type = "string"
+    },
+  ]
+
+  org_tf_vars = var.scope_level == "account" ? [] : [
+    {
+      key        = "organization_name"
+      value      = var.organization_name != null ? var.organization_name : ""
+      value_type = "string"
+    },
+    {
+      key        = "organization_id"
+      value      = local.org_identifier
+      value_type = "string"
+    },
+    {
+      key        = "organization_description"
+      value      = var.organization_description
+      value_type = "string"
+    },
+  ]
+
+  project_tf_vars = var.scope_level != "project" ? [] : [
+    {
+      key        = "project_name"
+      value      = var.project_name != null ? var.project_name : ""
+      value_type = "string"
+    },
+    {
+      key        = "project_id"
+      value      = local.project_identifier
+      value_type = "string"
+    },
+    {
+      key        = "project_key"
+      value      = var.project_key != null ? var.project_key : ""
+      value_type = "string"
+    },
+    {
+      key        = "project_description"
+      value      = var.project_description
+      value_type = "string"
+    },
+  ]
 }
 
 # ── Workspace resource (always present — no count gate) ─────────────────────
@@ -70,63 +137,7 @@ module "hpa_workspace" {
   repository_path      = var.workspace_repository_path
   repository_branch    = var.workspace_repository_branch
 
-  terraform_variables = [
-    {
-      key        = "harness_platform_account"
-      value      = var.harness_platform_account
-      value_type = "string"
-    },
-    {
-      key        = "harness_platform_url"
-      value      = var.harness_platform_url
-      value_type = "string"
-    },
-    {
-      key        = "organization_name"
-      value      = var.organization_name != null ? var.organization_name : ""
-      value_type = "string"
-    },
-    {
-      key        = "organization_id"
-      value      = var.organization_id != null ? var.organization_id : ""
-      value_type = "string"
-    },
-    {
-      key        = "organization_description"
-      value      = var.organization_description
-      value_type = "string"
-    },
-    {
-      key        = "project_name"
-      value      = var.project_name != null ? var.project_name : ""
-      value_type = "string"
-    },
-    {
-      key        = "project_id"
-      value      = var.project_id != null ? var.project_id : ""
-      value_type = "string"
-    },
-    {
-      key        = "project_key"
-      value      = var.project_key != null ? var.project_key : ""
-      value_type = "string"
-    },
-    {
-      key        = "project_description"
-      value      = var.project_description
-      value_type = "string"
-    },
-    {
-      key        = "scope_level"
-      value      = var.scope_level
-      value_type = "string"
-    },
-    {
-      key        = "configs_relative_path"
-      value      = var.configs_relative_path
-      value_type = "string"
-    },
-  ]
+  terraform_variables = concat(local.base_tf_vars, local.org_tf_vars, local.project_tf_vars)
 
   environment_variables = [
     {
@@ -152,7 +163,7 @@ module "hpa_workspace" {
   }
 }
 
-# ── Outputs ─────────────────────────────────────────────────────────────────
+
 output "workspace_identifier" {
   description = "IACM workspace identifier — always deterministic from inputs"
   value       = local.workspace_identifier

@@ -8,11 +8,11 @@ terraform {
   }
 }
 
-provider "harness" {
-  # HARNESS_ENDPOINT must be set explicitly — do NOT rely on default
-  # app.harness.io/gateway. The pipeline passes it via env var.
-  endpoint = var.harness_platform_url
-}
+# provider "harness" {
+#   # HARNESS_ENDPOINT must be set explicitly — do NOT rely on default
+#   # app.harness.io/gateway. The pipeline passes it via env var.
+#   endpoint = var.harness_platform_url
+# }
 
 # ── Core variables (passed from pipeline) ─────────────────────────────────
 variable "harness_platform_account" {
