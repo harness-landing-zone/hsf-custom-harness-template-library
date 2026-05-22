@@ -153,3 +153,9 @@ variable "git_connector_credentials" {
   description = "[Optional] Credentials for git connectors keyed by connector identifier. Takes effect only when the connector YAML does not define the credential block."
   default     = {}
 }
+
+variable "platform_configs_repo_name" {
+  type        = string
+  description = "Name of the platform-configs repository."
+  default     = "local-repo"
+}

@@ -34,8 +34,8 @@ data "harness_platform_organization" "selected" {
 resource "harness_platform_project" "selected" {
   count = local.scope == "project" ? 1 : 0
 
-  identifier  = local.project_identifier
-  name        = var.project_name
+  identifier = local.project_identifier
+  name       = var.project_name
   # Use local.org_identifier (always a known string at plan time) rather than
   # the data source, which becomes (known after apply) when the calling module
   # has depends_on — preventing forced replacements on subsequent plans.

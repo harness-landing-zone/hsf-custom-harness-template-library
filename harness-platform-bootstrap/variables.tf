@@ -69,7 +69,7 @@ variable "scope_level" {
 }
 
 variable "prefix" {
-  type = string
-  default = ""
+  type        = string
+  default     = ""
   description = "Resource prefix to ensure uniqueness. Should be left blank when deploying a single instance of the module, but can be set to differentiate resources when deploying multiple instances (e.g. across environments)."
 }

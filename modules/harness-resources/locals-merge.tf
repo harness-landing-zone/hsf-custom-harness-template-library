@@ -116,19 +116,19 @@ locals {
         (cfg.key_fn == "folder"
           ? basename(dirname(rel))
           : replace(replace(rel, ".yaml", ""), ".rego", "")
-        ) => {
+          ) => {
           origin = "global"
           name = lookup(
             try(yamldecode(file("${cfg.global_dir}/${rel}")), {}),
             "name",
             cfg.key_fn == "folder"
-              ? basename(dirname(rel))
-              : replace(replace(replace(replace(rel, ".yaml", ""), ".rego", ""), " ", "_"), "-", "_")
+            ? basename(dirname(rel))
+            : replace(replace(replace(replace(rel, ".yaml", ""), ".rego", ""), " ", "_"), "-", "_")
           )
           identifier = (
             cfg.key_fn == "folder"
-              ? basename(dirname(rel))
-              : replace(replace(replace(replace(rel, ".yaml", ""), ".rego", ""), " ", "_"), "-", "_")
+            ? basename(dirname(rel))
+            : replace(replace(replace(replace(rel, ".yaml", ""), ".rego", ""), " ", "_"), "-", "_")
           )
           dir  = cfg.global_dir
           file = rel
@@ -141,19 +141,19 @@ locals {
         (cfg.key_fn == "folder"
           ? basename(dirname(rel))
           : replace(replace(rel, ".yaml", ""), ".rego", "")
-        ) => {
+          ) => {
           origin = "org"
           name = lookup(
             try(yamldecode(file("${cfg.org_dir}/${rel}")), {}),
             "name",
             cfg.key_fn == "folder"
-              ? basename(dirname(rel))
-              : replace(replace(replace(replace(rel, ".yaml", ""), ".rego", ""), " ", "_"), "-", "_")
+            ? basename(dirname(rel))
+            : replace(replace(replace(replace(rel, ".yaml", ""), ".rego", ""), " ", "_"), "-", "_")
           )
           identifier = (
             cfg.key_fn == "folder"
-              ? basename(dirname(rel))
-              : replace(replace(replace(replace(rel, ".yaml", ""), ".rego", ""), " ", "_"), "-", "_")
+            ? basename(dirname(rel))
+            : replace(replace(replace(replace(rel, ".yaml", ""), ".rego", ""), " ", "_"), "-", "_")
           )
           dir  = cfg.org_dir
           file = rel

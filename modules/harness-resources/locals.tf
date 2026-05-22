@@ -8,7 +8,7 @@ locals {
   ##############################################################################
 
   scope = (
-    var.project_name != null      ? "project" :
+    var.project_name != null ? "project" :
     var.organization_name != null ? "organization" :
     "account"
   )
@@ -26,15 +26,15 @@ locals {
 
   # Absolute path to this org's config folder
   org_directory = (
-      var.org_root != null
-      ? var.org_root
-      : "${local.platform_configs_dir}/organizations/${var.organization_name != null ? var.organization_name : ""}"
-    )
-  
+    var.org_root != null
+    ? var.org_root
+    : "${local.platform_configs_dir}/organizations/${var.organization_name != null ? var.organization_name : ""}"
+  )
+
   # The project config folder key — prefer explicit var, then derive from project_name.
   effective_project_key = (
-    var.project_key != null   ? var.project_key :
-    var.project_name != null  ? replace(replace(var.project_name, " ", "_"), "-", "_") :
+    var.project_key != null ? var.project_key :
+    var.project_name != null ? replace(replace(var.project_name, " ", "_"), "-", "_") :
     ""
   )
 
@@ -43,7 +43,7 @@ locals {
   # Org:     org_directory/
   # Project: org_directory/projects/<project_key>/
   config_directory = (
-    local.scope == "project"      ? "${local.org_directory}/projects/${local.effective_project_key}" :
+    local.scope == "project" ? "${local.org_directory}/projects/${local.effective_project_key}" :
     local.scope == "organization" ? local.org_directory :
     "${local.platform_configs_dir}/account"
   )
@@ -74,7 +74,7 @@ locals {
   )
 
   effective_template = (
-    local.scope == "project"      ? local.default_project_template :
+    local.scope == "project" ? local.default_project_template :
     local.scope == "organization" ? local.default_org_template :
     var.default_account_template
   )
@@ -92,9 +92,9 @@ locals {
   ##############################################################################
 
   org_identifier = lower(
-    var.organization_id != null                     ? var.organization_id :
-    try(local.org_config.identifier, null) != null  ? local.org_config.identifier :
-    var.organization_name != null                   ? replace(replace(var.organization_name, " ", "_"), "-", "_") :
+    var.organization_id != null ? var.organization_id :
+    try(local.org_config.identifier, null) != null ? local.org_config.identifier :
+    var.organization_name != null ? replace(replace(var.organization_name, " ", "_"), "-", "_") :
     ""
   )
 
@@ -102,9 +102,9 @@ locals {
   org_description = try(local.org_config.description, var.organization_description)
 
   project_identifier = lower(
-    var.project_id != null                             ? var.project_id :
+    var.project_id != null ? var.project_id :
     try(local.project_config.identifier, null) != null ? try(local.project_config.identifier, null) :
-    var.project_name != null                           ? replace(replace(var.project_name, " ", "_"), "-", "_") :
+    var.project_name != null ? replace(replace(var.project_name, " ", "_"), "-", "_") :
     ""
   )
 
@@ -113,9 +113,9 @@ locals {
   ##############################################################################
 
   required_tags = {
-    created_by              = "Terraform"
-    harnessSolutionsFactory = "true"
-    template                = local.effective_template
+    created_by                 = "Terraform"
+    template                   = local.effective_template
+    platform_configs_repo_name = var.platform_configs_repo_name
   }
 
   common_tags       = merge(var.tags, local.required_tags)

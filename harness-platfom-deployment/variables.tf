@@ -93,5 +93,5 @@ variable "configs_relative_path" {
 variable "platform_configs_repo_name" {
   type        = string
   description = "Name of the platform-configs repository."
-  default     = ""
+  default     = "local-repo"
 }

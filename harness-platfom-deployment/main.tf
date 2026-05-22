@@ -16,13 +16,14 @@ module "account" {
   count  = var.scope_level == "account" ? 1 : 0
   source = "../modules/harness-resources"
 
-  harness_platform_account = var.harness_platform_account
-  harness_platform_url     = var.harness_platform_url
-  tags                     = var.tags
-  configs_root             = local.configs_root
-  templates_root           = local.templates_root
-  default_account_template = "account-config"
-  git_connector_credentials = var.git_connector_credentials
+  harness_platform_account   = var.harness_platform_account
+  harness_platform_url       = var.harness_platform_url
+  tags                       = var.tags
+  configs_root               = local.configs_root
+  templates_root             = local.templates_root
+  default_account_template   = "account-config"
+  git_connector_credentials  = var.git_connector_credentials
+  platform_configs_repo_name = var.platform_configs_repo_name
 }
 
 ##############################################################################
@@ -36,15 +37,16 @@ module "organization" {
   count  = var.scope_level == "organization" ? 1 : 0
   source = "../modules/harness-resources"
 
-  harness_platform_account  = var.harness_platform_account
-  harness_platform_url      = var.harness_platform_url
-  organization_name         = var.organization_name
-  organization_id           = var.organization_id
-  organization_description  = var.organization_description
-  tags                      = var.tags
-  configs_root              = local.configs_root
-  templates_root            = local.templates_root
-  git_connector_credentials = var.git_connector_credentials
+  harness_platform_account   = var.harness_platform_account
+  harness_platform_url       = var.harness_platform_url
+  organization_name          = var.organization_name
+  organization_id            = var.organization_id
+  organization_description   = var.organization_description
+  tags                       = var.tags
+  configs_root               = local.configs_root
+  templates_root             = local.templates_root
+  git_connector_credentials  = var.git_connector_credentials
+  platform_configs_repo_name = var.platform_configs_repo_name
 }
 
 ##############################################################################
@@ -60,16 +62,17 @@ module "projects" {
   source     = "../modules/harness-resources"
   depends_on = [module.organization]
 
-  harness_platform_account  = var.harness_platform_account
-  harness_platform_url      = var.harness_platform_url
-  organization_id           = one(module.organization[*].organization_id)
-  project_name              = each.value.name
-  project_key               = each.value.folder
-  tags                      = var.tags
-  configs_root              = local.configs_root
-  org_root                  = "${local.configs_root}/organizations/${var.organization_name}"
-  templates_root            = local.templates_root
-  git_connector_credentials = var.git_connector_credentials
+  harness_platform_account   = var.harness_platform_account
+  harness_platform_url       = var.harness_platform_url
+  organization_id            = one(module.organization[*].organization_id)
+  project_name               = each.value.name
+  project_key                = each.value.folder
+  tags                       = var.tags
+  configs_root               = local.configs_root
+  org_root                   = "${local.configs_root}/organizations/${var.organization_name}"
+  templates_root             = local.templates_root
+  git_connector_credentials  = var.git_connector_credentials
+  platform_configs_repo_name = var.platform_configs_repo_name
 }
 
 ##############################################################################
@@ -90,16 +93,17 @@ module "project" {
   source     = "../modules/harness-resources"
   depends_on = [data.harness_platform_organization.existing]
 
-  harness_platform_account  = var.harness_platform_account
-  harness_platform_url      = var.harness_platform_url
-  organization_name         = var.organization_name
-  organization_id           = coalesce(var.organization_id, try(data.harness_platform_organization.existing[0].id, null), local.org_identifier)
-  project_name              = var.project_name
-  project_key               = var.project_key
-  project_id                = var.project_id
-  project_description       = var.project_description
-  tags                      = var.tags
-  configs_root              = local.configs_root
-  templates_root            = local.templates_root
-  git_connector_credentials = var.git_connector_credentials
+  harness_platform_account   = var.harness_platform_account
+  harness_platform_url       = var.harness_platform_url
+  organization_name          = var.organization_name
+  organization_id            = coalesce(var.organization_id, try(data.harness_platform_organization.existing[0].id, null), local.org_identifier)
+  project_name               = var.project_name
+  project_key                = var.project_key
+  project_id                 = var.project_id
+  project_description        = var.project_description
+  tags                       = var.tags
+  configs_root               = local.configs_root
+  templates_root             = local.templates_root
+  git_connector_credentials  = var.git_connector_credentials
+  platform_configs_repo_name = var.platform_configs_repo_name
 }

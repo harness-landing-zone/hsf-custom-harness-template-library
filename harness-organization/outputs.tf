@@ -28,10 +28,10 @@ output "organization_name" {
 output "platform_configs_dir" {
   value = local.platform_configs_dir
 }
- output "source_directory" {
-   value = local.source_directory
- }
+output "source_directory" {
+  value = local.source_directory
+}
 
 output "org_directory" {
-  value = local.org_directory 
+  value = local.org_directory
 }

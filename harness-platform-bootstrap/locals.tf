@@ -12,9 +12,9 @@ locals {
   org_project_files = (
     var.scope_level == "organization" && var.organization_name != null
     ? try(
-        fileset("${local.configs_root}/organizations/${var.organization_name}/projects", "*/config.yaml"),
-        toset([])
-      )
+      fileset("${local.configs_root}/organizations/${var.organization_name}/projects", "*/config.yaml"),
+      toset([])
+    )
     : toset([])
   )
 
@@ -33,7 +33,7 @@ locals {
     lower(coalesce(
       try(cfg.identifier, null),
       replace(replace(coalesce(try(cfg.name, null), folder), " ", "_"), "-", "_")
-    )) => {
+      )) => {
       folder = folder
       name   = try(cfg.name, replace(replace(folder, "_", " "), "-", " "))
     }

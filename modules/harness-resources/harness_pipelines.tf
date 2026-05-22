@@ -31,6 +31,6 @@ resource "harness_platform_pipeline" "pipelines" {
     pipeline_description = lookup(each.value.cnf, "description", "Pipeline managed by Solutions Factory")
   }
   lifecycle {
-    ignore_changes = [ git_import_info, pipeline_import_request ]
+    ignore_changes = [git_import_info, pipeline_import_request]
   }
 }
