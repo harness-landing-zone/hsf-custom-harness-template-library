@@ -1,5 +1,5 @@
 terraform {
-  backend "gcs" {}
+  # backend "gcs" {}
 
   required_providers {
     harness = {
