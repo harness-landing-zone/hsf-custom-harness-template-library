@@ -1,6 +1,6 @@
 variable "workspace_repository" {
   type    = string
-  default = "harness-platform-accelerator"
+  default = "hsf-custom-harness-template-library"
 }
 
 variable "workspace_repository_connector" {
@@ -15,7 +15,7 @@ variable "workspace_repository_path" {
 
 variable "workspace_repository_branch" {
   type    = string
-  default = "main"
+  default = "tofu"
 }
 
 variable "workspace_provisioner_version" {
