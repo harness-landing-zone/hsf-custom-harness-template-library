@@ -71,7 +71,7 @@ locals {
     },
     {
       key        = "platform_configs_repo_name"
-      value      = var.platform_configs_repo_name
+      value      = try(var.platform_configs_repo_name, "local-repo")
       value_type = "string"
     },
   ]
